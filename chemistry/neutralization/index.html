@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>중화반응 문제 디자이너</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+<header>
+  <div class="title">중화반응 문제 디자이너</div>
+  <div class="subtitle">평가원 스타일 A/B/C 용액 문항 제작 도구</div>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<main class="container">
+
+  <section class="layout">
+
+    <aside class="card side-panel">
+      <h2>① 용액 설정</h2>
+
+      <div class="notice">
+        화면에는 A, B, C로 표시됩니다.<br>
+        내부 계산은 A=산, B/C=염기입니다.
+      </div>
+
+      <div class="input-grid">
+        <label>A 용액 단위량</label>
+        <input id="aN" type="number" value="3" step="0.5" />
+
+        <label>B 용액 단위량</label>
+        <input id="bN" type="number" value="2" step="0.5" />
+
+        <label>C 용액 단위량</label>
+        <input id="cN" type="number" value="1" step="0.5" />
+
+        <label>기준 부피</label>
+        <input id="unitV" type="number" value="10" step="1" />
+      </div>
+
+      <div class="unit-box">
+        예: A 용액 3N / 10mL
+      </div>
+
+      <hr />
+
+      <h2>② 혼합 용액</h2>
+
+      <div class="mix-head">
+        <span></span>
+        <span>A</span>
+        <span>B</span>
+        <span>C</span>
+      </div>
+
+      <div class="mix-row">
+        <span>(가)</span>
+        <input id="gaA" type="number" value="10" />
+        <input id="gaB" type="number" value="15" />
+        <input id="gaC" type="number" value="30" />
+      </div>
+
+      <div class="mix-row">
+        <span>(나)</span>
+        <input id="naA" type="number" value="20" />
+        <input id="naB" type="number" value="20" />
+        <input id="naC" type="number" value="15" />
+      </div>
+
+      <div class="mix-row">
+        <span>(다)</span>
+        <input id="daA" type="number" value="25" />
+        <input id="daB" type="number" value="15" />
+        <input id="daC" type="number" value="15" />
+      </div>
+
+      <button onclick="runAll()">생성 / 갱신</button>
+      <button class="green" onclick="makeRandomSet()">랜덤 예시</button>
+      <button class="gray" onclick="resetDefault()">기본값</button>
+    </aside>
+
+    <section class="main-panel">
+
+      <section class="card">
+        <div class="card-head">
+          <h2>③ 평가원 표</h2>
+          <button class="small-btn" onclick="copyText('examTableText')">복사</button>
+        </div>
+
+        <table class="exam-table">
+          <thead>
+            <tr>
+              <th>항목</th>
+              <th>(가)</th>
+              <th>(나)</th>
+              <th>(다)</th>
+            </tr>
+          </thead>
+          <tbody id="examTable"></tbody>
+        </table>
+
+        <div id="examTableText" class="copy-box"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>④ 이온비 생성</h2>
+          <button class="small-btn" onclick="copyText('ionRatioText')">복사</button>
+        </div>
+
+        <div id="ionRatioCards" class="ratio-grid"></div>
+        <div id="ionRatioText" class="copy-box"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>⑤ 원그래프</h2>
+          <button class="small-btn" onclick="downloadAllSVG()">SVG 저장</button>
+        </div>
+
+        <div id="pieCharts" class="pie-grid"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>⑥ 자동 선지</h2>
+          <button class="small-btn" onclick="copyText('choiceBox')">복사</button>
+        </div>
+
+        <div id="choiceBox" class="question-box"></div>
+      </section>
+
+      <section class="card">
+        <h2>⑦ 킬러 포인트</h2>
+        <div id="killerBox" class="killer-box"></div>
+      </section>
+
+    </section>
+
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

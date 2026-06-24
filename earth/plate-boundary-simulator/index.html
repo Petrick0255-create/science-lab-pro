@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>판의 경계 시뮬레이터</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="../../logo.png" />
+</head>
+
+<body>
+  <header>
+    <a href="../../index.html" class="home-link">
+      <img src="../../logo.png" class="logo" alt="J&B LAB" />
+      <div class="brand">J&B</div>
+      <div class="badge">LAB</div>
+    </a>
+    <a href="../../index.html" class="home-btn">J&B 홈으로</a>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>판의 경계 시뮬레이터</h1>
+      <p>발산형 · 보존형 · 수렴형 경계에서 판의 운동, 마그마 상승, 섭입, 지진 발생을 3D로 관찰합니다.</p>
+    </section>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>설정</h2>
+
+        <label>경계 유형
+          <select id="boundaryType">
+            <option value="divergent">발산형 경계</option>
+            <option value="transform">보존형 경계</option>
+            <option value="convergent">수렴형 경계</option>
+          </select>
+        </label>
+
+        <label>판 이동 속도
+          <input id="speed" type="range" min="0" max="100" value="45" />
+        </label>
+
+        <label>마그마 활동 세기
+          <input id="magma" type="range" min="0" max="100" value="65" />
+        </label>
+
+        <label>지진 발생 빈도
+          <input id="quake" type="range" min="0" max="100" value="45" />
+        </label>
+
+        <div class="check-list">
+          <label><input id="showArrows" type="checkbox" checked /> 화살표 표시</label>
+          <label><input id="showQuakes" type="checkbox" checked /> 지진 표시</label>
+          <label><input id="showMagma" type="checkbox" checked /> 마그마 표시</label>
+          <label><input id="showPlates" type="checkbox" checked /> 판 표시</label>
+          <label><input id="showMantle" type="checkbox" checked /> 맨틀 표시</label>
+          <label><input id="showBoundary" type="checkbox" unchecked /> 경계 표시</label>
+        </div>
+
+        <div class="world-map-box">
+          <div class="map-title">대표 위치</div>
+          <img
+            id="worldMapImg"
+            class="world-map-img"
+            src="https://upload.wikimedia.org/wikipedia/commons/8/83/Equirectangular_projection_SW.jpg"
+            alt="세계지도"
+          />
+          <div id="mapMarkers"></div>
+        </div>
+
+        <button id="captureBtn">이미지 저장</button>
+      </aside>
+
+      <section class="sim-area">
+        <div class="canvas-wrap">
+          <canvas id="simCanvas" width="1100" height="620"></canvas>
+        </div>
+
+        <div class="example-box">
+          <h3>대표 사례</h3>
+          <div id="exampleList"></div>
+        </div>
+
+        <div class="info-box">
+          <h2 id="infoTitle">발산형 경계</h2>
+          <p id="infoText">
+            두 판이 서로 멀어지며, 맨틀 물질이 상승하여 새로운 해양 지각이 생성됩니다.
+          </p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

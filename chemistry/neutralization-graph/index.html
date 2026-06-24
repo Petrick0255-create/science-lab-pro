@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>중화반응 그래프</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",Arial,sans-serif;background:#eef3f8;color:#111}
+header{
+  background:#1f2937;
+  color:white;
+  text-align:center;
+  padding:18px 12px 16px;
+}
+header .title{
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-.3px;
+}
+header .subtitle{
+  margin-top:5px;
+  font-size:14px;
+  font-weight:700;
+  color:#d1d5db;
+}
+header .home{
+  display:inline-block;
+  margin-top:9px;
+  color:white;
+  font-size:13px;
+  font-weight:800;
+  text-decoration:none;
+  opacity:.9;
+}
+header .home:hover{
+  opacity:1;
+  text-decoration:underline;
+}
+.container{max-width:1280px;margin:0 auto;padding:12px}.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}label{display:block;font-size:12px;font-weight:900;margin-bottom:4px;color:#222}
+select,input,button{width:100%;min-height:36px;border:1px solid #cfd4dc;border-radius:8px;padding:6px 8px;font-size:14px;background:#fff}
+button{border:none;background:#2563eb;color:#fff;font-weight:900;cursor:pointer}.dark{background:#111827}.gray{background:#4b5563}.green{background:#0f766e}
+.stage{display:block}.problem-title{font-family:Cambria,"Times New Roman",serif;font-size:30px;margin-bottom:8px}.example-badge{font-size:18px;background:#777;color:#fff;border-radius:5px;padding:0 4px;margin:0 8px}
+.beaker-scene{height:380px;position:relative;background:white;overflow:hidden;max-width:960px;margin:0 auto}.drop-label{position:absolute;left:255px;top:12px;width:170px;text-align:center;font-family:Cambria,"Times New Roman",serif;font-size:30px}.down-arrow{position:absolute;left:338px;top:58px;width:0;height:68px;border-left:5px solid #b8b68c}.down-arrow:after{content:"";position:absolute;left:-13px;bottom:-2px;border-left:11px solid transparent;border-right:11px solid transparent;border-top:20px solid #b8b68c}
+.beaker{position:absolute;width:180px;height:170px;border-left:2px solid #555;border-right:2px solid #555;border-bottom:2px solid #555;bottom:64px}.beaker.left{left:250px}.beaker.right{right:250px}.water{position:absolute;left:0;right:0;bottom:0;height:70%;background:linear-gradient(#a7dff2,#eef9fd);border-top:2px solid #555}.beaker-name{position:absolute;bottom:32px;font-size:16px;font-weight:800;color:#333;text-align:center;width:180px}.left-name{left:250px}.right-name{right:250px}
+.mix-arrow{position:absolute;left:50%;top:218px;transform:translateX(-50%);width:54px;height:18px}.mix-arrow .line{position:absolute;top:8px;left:0;width:35px;height:4px;background:#b8b68c}.mix-arrow .head{position:absolute;right:0;top:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:16px solid #b8b68c}
+.ion{position:absolute;font-family:Cambria,"Times New Roman",serif;font-size:27px;line-height:1;color:#111}.ion.blue{color:#1686bd}.result-tag{position:absolute;right:280px;top:98px;font-size:14px;font-weight:900;color:#555}.graphs{display:grid;grid-template-columns:repeat(2,520px);justify-content:center;gap:24px;margin-top:14px}.graph-box{background:#fff}.graph-title{text-align:center;font-weight:900;margin-bottom:8px;font-size:16px}canvas{width:100%;background:#fff;border:1px solid #ddd}.small{font-size:13px;color:#444;line-height:1.55}.note{margin-top:8px;font-size:12px;color:#555}
+@media(max-width:1120px){.grid,.graphs{grid-template-columns:1fr}.beaker-scene{max-width:620px}.beaker.left{left:50px}.beaker.right{right:50px}.left-name{left:50px}.right-name{right:50px}.drop-label{left:55px}.down-arrow{left:138px}.result-tag{right:80px}.mix-arrow{width:44px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">중화반응 그래프</div>
+  <div class="subtitle">평가원 스타일 중화반응 그래프 제작 도구</div>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+<div class="container">
+  <div class="card grid">
+    <div><label>산 선택</label><select id="acidPreset"><option value="HCl" selected>HCl</option><option value="HA">HA</option><option value="H2A">H₂A</option></select></div>
+    <div><label>염기 선택</label><select id="basePreset"><option value="NaOH" selected>NaOH</option><option value="KOH">KOH</option><option value="BOH">BOH</option><option value="B(OH)2">B(OH)₂</option></select></div>
+    <div><label>넣는 방향</label><select id="direction"><option value="baseToAcid" selected>염기를 산에 넣기</option><option value="acidToBase">산을 염기에 넣기</option></select></div>
+    <div><label>중화 상태</label><select id="state"><option value="before">중화 전</option><option value="eq" selected>중화점</option><option value="after">중화 후</option></select></div>
+    <div><label>결과 보기</label><select id="resultView"><option value="hide" selected>숨기기</option><option value="all">전체 이온</option><option value="cation">양이온만</option><option value="anion">음이온만</option></select></div>
+
+    <div><label>산 덩어리 수 / 10 mL</label><input id="acidChunks" type="number" value="3" min="1" max="20" step="1"></div>
+    <div><label>염기 덩어리 수 / 10 mL</label><input id="baseChunks" type="number" value="3" min="1" max="20" step="1"></div>
+    <div><label>총 혼합 부피(mL)</label><input id="totalVolume" type="number" value="12" min="4" max="30" step="1"></div>
+    <div><label>그래프 점 개수</label><select id="pointCount"><option value="5" selected>5개 A~E</option><option value="6">6개 A~F</option><option value="7">7개 A~G</option></select></div>
+    <div><label>온도 시작(℃)</label><input id="baseTemp" type="number" value="24" step="1"></div>
+
+    <div><label>온도 상승폭(℃)</label><input id="tempRise" type="number" value="4" step="0.5"></div>
+    <div><label>축 굵기</label><input id="axisWidth" type="number" value="2" step="0.5"></div>
+    <div><label>점선 굵기</label><input id="dashWidth" type="number" value="1.2" step="0.5"></div>
+    <div><label>그래프 굵기</label><input id="graphWidth" type="number" value="2.5" step="0.5"></div>
+    <div><label>그래프 형태</label><select id="graphStyle"><option value="line" selected>그래프 표시</option><option value="blank">축만 표시</option></select></div>
+
+    <div><label>PNG</label><button onclick="savePNG()">PNG 저장</button></div>
+    <div><label>초기화</label><button class="dark" onclick="resetDefault()">기본값</button></div>
+    <div><label>예시값</label><button class="green" onclick="setImageExample()">그림 예시</button></div>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <div class="problem-title"><span id="acidValenceText">1가</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="baseValenceText">1가</span> <span class="example-badge">예</span> <span id="formulaLine">HCl&nbsp;&nbsp;&nbsp;NaOH</span></div>
+      <div class="beaker-scene">
+        <div class="drop-label" id="dropLabel">NaOH</div><div class="down-arrow"></div>
+        <div class="beaker left"><div class="water"></div><div id="leftIons"></div></div><div class="beaker-name left-name" id="leftName">HCl 수용액</div>
+        <div class="mix-arrow"><div class="line"></div><div class="head"></div></div>
+        <div class="beaker right"><div class="water"></div><div id="rightIons"></div></div><div class="beaker-name right-name">혼합 후</div><div class="result-tag" id="resultTag"></div>
+      </div>
+      <div class="small" id="summary"></div>
+    </div>
+
+    <div class="card">
+      <div class="graphs">
+        <div class="graph-box"><div class="graph-title">전체 이온 수</div><canvas id="totalCanvas" width="520" height="340"></canvas></div>
+        <div class="graph-box"><div class="graph-title">양이온 수</div><canvas id="cationCanvas" width="520" height="340"></canvas></div>
+        <div class="graph-box"><div class="graph-title">음이온 수</div><canvas id="anionCanvas" width="520" height="340"></canvas></div>
+        <div class="graph-box"><div class="graph-title">혼합 용액의 최고 온도</div><canvas id="tempCanvas" width="520" height="390"></canvas></div>
+      </div>
+      <div class="note">산/염기 덩어리 수는 이온화되기 전 분자·화학식 단위 수입니다. 부피비는 온도 그래프의 x축 아래 두 줄로 표시합니다.</div>
+    </div>
+  </div>
+</div>
+<script>
+function v(id){return document.getElementById(id).value}
+function n(id){return Number(document.getElementById(id).value)}
+const cv={total:document.getElementById('totalCanvas'),cation:document.getElementById('cationCanvas'),anion:document.getElementById('anionCanvas'),temp:document.getElementById('tempCanvas')};
+const presets={
+  HCl:{formula:'HCl',valence:1,cation:'H⁺',anion:'Cl⁻',name:'HCl 수용액'},
+  HA:{formula:'HA',valence:1,cation:'H⁺',anion:'A⁻',name:'HA 수용액'},
+  H2A:{formula:'H₂A',valence:2,cation:'H⁺',anion:'A²⁻',name:'H₂A 수용액'},
+  NaOH:{formula:'NaOH',valence:1,cation:'Na⁺',anion:'OH⁻',name:'NaOH 수용액'},
+  KOH:{formula:'KOH',valence:1,cation:'K⁺',anion:'OH⁻',name:'KOH 수용액'},
+  BOH:{formula:'BOH',valence:1,cation:'B⁺',anion:'OH⁻',name:'BOH 수용액'},
+  'B(OH)2':{formula:'B(OH)₂',valence:2,cation:'B²⁺',anion:'OH⁻',name:'B(OH)₂ 수용액'}
+};
+function acid(){return presets[v('acidPreset')]}
+function base(){return presets[v('basePreset')]}
+function ionHtml(s){return s.replace('⁺','<sup>+</sup>').replace('⁻','<sup>−</sup>').replace('²','<sup>2</sup>')}
+function clearIons(){leftIons.innerHTML='';rightIons.innerHTML=''}
+function addIon(parent,text,x,y,blue=false){const el=document.createElement('div');el.className='ion'+(blue?' blue':'');el.style.left=x+'px';el.style.top=y+'px';el.innerHTML=ionHtml(text);document.getElementById(parent).appendChild(el)}
+function addIonList(parent,items){const pos=[[28,42],[92,42],[28,88],[92,88],[60,124],[118,124],[60,66],[118,104]];items.slice(0,8).forEach((it,i)=>{const p=pos[i%pos.length];addIon(parent,it.text,p[0],p[1],it.blue)})}
+function initialIons(){const dir=v('direction'), a=acid(), b=base(); let items=[]; if(dir==='baseToAcid'){for(let i=0;i<a.valence*2;i++)items.push({text:a.cation}); for(let i=0;i<2;i++)items.push({text:a.anion});} else {for(let i=0;i<2;i++)items.push({text:b.cation}); for(let i=0;i<b.valence*2;i++)items.push({text:b.anion});} return items}
+function resultIons(){const a=acid(), b=base(), st=v('state'); let items=[]; const saltUnits=2; for(let i=0;i<saltUnits;i++){items.push({text:b.cation,blue:true}); items.push({text:a.anion,blue:true});} if(st==='before'){ if(v('direction')==='baseToAcid') items.unshift({text:a.cation}); else items.unshift({text:b.anion}); } if(st==='after'){ if(v('direction')==='baseToAcid') items.push({text:b.anion}); else items.push({text:a.cation}); } const view=v('resultView'); if(view==='cation')items=items.filter(it=>it.text.includes('⁺')); if(view==='anion')items=items.filter(it=>it.text.includes('⁻')); if(view==='hide')items=[]; return items; }
+function drawBeakers(){clearIons();const dir=v('direction'), a=acid(), b=base();acidValenceText.textContent=a.valence+'가';baseValenceText.textContent=b.valence+'가';formulaLine.innerHTML=a.formula+'&nbsp;&nbsp;&nbsp;'+b.formula;dropLabel.innerHTML=dir==='baseToAcid'?b.formula:a.formula;leftName.textContent=dir==='baseToAcid'?a.name:b.name;resultTag.textContent=v('resultView')==='hide'?'':'결과 보기';addIonList('leftIons',initialIons());addIonList('rightIons',resultIons());}
+function sampleRows(){
+  const count=Number(v('pointCount'));
+  const total=n('totalVolume');
+  const rows=[];
+  for(let i=1;i<=count;i++){
+    const acidVol=total*i/(count+1);
+    const baseVol=total-acidVol;
+    rows.push({label:String.fromCharCode(64+i), acidVol, baseVol});
+  }
+  return rows;
+}
+function chemistryAt(acidVol,baseVol){
+  const a=acid(), b=base();
+  const acidUnits=n('acidChunks')*acidVol/10;
+  const baseUnits=n('baseChunks')*baseVol/10;
+  const H=a.valence*acidUnits;
+  const OH=b.valence*baseUnits;
+  const neutral=Math.min(H,OH);
+  return {acidUnits,baseUnits,H,OH,neutral,excessH:Math.max(H-OH,0),excessOH:Math.max(OH-H,0)};
+}
+function equivalenceAcidVolume(){
+  const total=n('totalVolume'), av=acid().valence, bv=base().valence;
+  const ac=n('acidChunks'), bc=n('baseChunks');
+  // 온도 그래프용: 총 부피가 일정할 때 av*ac*Va/10 = bv*bc*(T-Va)/10
+  const denom=av*ac+bv*bc;
+  if(denom<=0)return total/2;
+  return total*bv*bc/denom;
+}
+function equivalenceAddedVolume(){
+  const T=n('totalVolume'), av=acid().valence, bv=base().valence;
+  const ac=n('acidChunks'), bc=n('baseChunks');
+  // 이온 수 그래프용: 한 용액 T mL에 다른 용액을 x mL 넣는 상황
+  if(v('direction')==='baseToAcid'){
+    // 산 T mL에 염기 x mL 첨가
+    return (av*ac*T)/(bv*bc);
+  }else{
+    // 염기 T mL에 산 x mL 첨가
+    return (bv*bc*T)/(av*ac);
+  }
+}
+function ionsForAddition(addedVol){
+  const T=n('totalVolume'), av=acid().valence, bv=base().valence;
+  const ac=n('acidChunks'), bc=n('baseChunks');
+  let acidUnits, baseUnits;
+
+  if(v('direction')==='baseToAcid'){
+    acidUnits=ac*T/10;        // 처음 비커 안 산은 고정
+    baseUnits=bc*addedVol/10; // 넣은 염기만 증가
+  }else{
+    baseUnits=bc*T/10;        // 처음 비커 안 염기는 고정
+    acidUnits=ac*addedVol/10; // 넣은 산만 증가
+  }
+
+  const H=av*acidUnits;
+  const OH=bv*baseUnits;
+  const excessH=Math.max(H-OH,0);
+  const excessOH=Math.max(OH-H,0);
+
+  // 구경꾼 이온: 산 음이온은 산 화학식 단위 수만큼, 염기 양이온은 염기 화학식 단위 수만큼 존재
+  const cation=baseUnits+excessH;
+  const anion=acidUnits+excessOH;
+  const total=cation+anion;
+  return {cation,anion,total};
+}
+function graphData(type){
+  const rows=[];
+  const maxAdded=n('totalVolume');
+  for(let i=0;i<=100;i++){
+    const addedVol=maxAdded*i/100;
+    const c=ionsForAddition(addedVol);
+    const y=type==='total'?c.total:type==='cation'?c.cation:c.anion;
+    rows.push([addedVol,y]);
+  }
+  return rows;
+}
+function simpleYMax(type){
+  let max=1;
+  graphData(type).forEach(p=>{if(p[1]>max)max=p[1]});
+  return Math.ceil(max*1.15);
+}
+function drawSimpleGraph(canvas,title,type){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,left=82,right=36,top=40,bottom=60,gx0=left,gy0=H-bottom,gx1=W-right,gy1=top;
+  const total=n('totalVolume'), eq=equivalenceAddedVolume(), ymax=simpleYMax(type);
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='white';ctx.fillRect(0,0,W,H);
+  function xm(x){return gx0+x/total*(gx1-gx0)}function ym(y){return gy0-y/ymax*(gy0-gy1)}
+  drawAxesBasic(ctx,gx0,gy0,gx1,gy1,title);
+  drawVerticalDash(ctx,xm(eq),gy0,gy1);
+  if(v('graphStyle')==='blank')return;
+  ctx.save();ctx.strokeStyle='#111';ctx.lineWidth=n('graphWidth');ctx.beginPath();
+  graphData(type).forEach(([x,y],i)=>{if(i===0)ctx.moveTo(xm(x),ym(y));else ctx.lineTo(xm(x),ym(y));});ctx.stroke();ctx.restore();
+}
+function drawAxesBasic(ctx,gx0,gy0,gx1,gy1,title){
+  ctx.save();ctx.strokeStyle='#111';ctx.fillStyle='#111';ctx.lineWidth=n('axisWidth');
+  ctx.beginPath();ctx.moveTo(gx0,gy0);ctx.lineTo(gx1,gy0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gx1,gy0);ctx.lineTo(gx1-9,gy0-4);ctx.lineTo(gx1-9,gy0+4);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(gx0,gy0);ctx.lineTo(gx0,gy1);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gx0,gy1);ctx.lineTo(gx0-4,gy1+9);ctx.lineTo(gx0+4,gy1+9);ctx.closePath();ctx.fill();
+  ctx.font='20px Malgun Gothic';ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText(title,gx0-7,gy1);ctx.restore();
+}
+function drawVerticalDash(ctx,x,gy0,gy1){ctx.save();ctx.strokeStyle='#111';ctx.lineWidth=n('dashWidth');ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,gy0);ctx.lineTo(x,gy1);ctx.stroke();ctx.restore();}
+function drawVolumeRatioGraph(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,left=62,right=28,top=35,bottom=82,gx0=left,gy0=H-bottom,gx1=W-right,gy1=top;
+  const total=n('totalVolume'), rows=sampleRows();
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='white';ctx.fillRect(0,0,W,H);
+  function xm(v){return gx0+v/total*(gx1-gx0)}function ym(v){return gy0-v/total*(gy0-gy1)}
+  drawAxesBasic(ctx,gx0,gy0,gx1,gy1,'부피비');
+  ctx.save();ctx.strokeStyle='#111';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  rows.forEach(r=>{const x=xm(r.acidVol);ctx.beginPath();ctx.moveTo(x,gy0);ctx.lineTo(x,gy1);ctx.stroke();});ctx.restore();
+  if(v('graphStyle')!=='blank'){
+    ctx.save();ctx.lineWidth=n('graphWidth');ctx.strokeStyle='#111';
+    ctx.beginPath();rows.forEach((r,i)=>{const x=xm(r.acidVol),y=ym(r.acidVol);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+    ctx.beginPath();rows.forEach((r,i)=>{const x=xm(r.acidVol),y=ym(r.baseVol);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+    ctx.restore();
+  }
+  drawBottomVolumeLabels(ctx,rows,gx0,gy0,gx1,'산 수용액의 부피(mL)','염기 수용액의 부피(mL)');
+}
+function tempRows(){
+  const rows=sampleRows();
+  let maxNeutral=0; rows.forEach(r=>{maxNeutral=Math.max(maxNeutral,chemistryAt(r.acidVol,r.baseVol).neutral)});
+  rows.forEach(r=>{const neu=chemistryAt(r.acidVol,r.baseVol).neutral; r.temp=n('baseTemp')+(maxNeutral? n('tempRise')*neu/maxNeutral:0);});
+  return rows;
+}
+function drawTemperatureGraph(canvas){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,left=150,right=34,top=36,bottom=104,gx0=left,gy0=H-bottom,gx1=W-right,gy1=top;
+  const rows=tempRows();
+  const total=n('totalVolume');
+  let minT=Math.min(...rows.map(r=>r.temp),n('baseTemp'))-1; let maxT=Math.max(...rows.map(r=>r.temp))+1;
+  minT=Math.floor(minT); maxT=Math.ceil(maxT);
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='white';ctx.fillRect(0,0,W,H);
+  function xm(v){return gx0+v/total*(gx1-gx0)}function ym(t){return gy0-(t-minT)/(maxT-minT)*(gy0-gy1)}
+  // axis
+  ctx.save();ctx.strokeStyle='#111';ctx.fillStyle='#111';ctx.lineWidth=n('axisWidth');
+  ctx.beginPath();ctx.moveTo(gx0,gy0);ctx.lineTo(gx1,gy0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gx1,gy0);ctx.lineTo(gx1-9,gy0-4);ctx.lineTo(gx1-9,gy0+4);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(gx0,gy0);ctx.lineTo(gx0,gy1);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(gx0,gy1);ctx.lineTo(gx0-4,gy1+9);ctx.lineTo(gx0+4,gy1+9);ctx.closePath();ctx.fill();
+  ctx.font='17px Malgun Gothic';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('온',gx0-92,gy1+20);ctx.fillText('도',gx0-92,gy1+42);ctx.fillText('(℃)',gx0-92,gy1+64);ctx.restore();
+  // grid horizontal at row temps + vertical at samples
+  ctx.save();ctx.strokeStyle='#111';ctx.lineWidth=n('dashWidth');ctx.setLineDash([4,3]);ctx.globalAlpha=.75;
+  const gridTemps=[...new Set(rows.map(r=>Math.round(r.temp*10)/10))].sort((a,b)=>a-b);
+  gridTemps.forEach(t=>{ctx.beginPath();ctx.moveTo(gx0,ym(t));ctx.lineTo(gx1,ym(t));ctx.stroke();});
+  rows.forEach(r=>{ctx.beginPath();ctx.moveTo(xm(r.acidVol),gy0);ctx.lineTo(xm(r.acidVol),gy1);ctx.stroke();});ctx.restore();
+  ctx.save();ctx.fillStyle='#111';ctx.font='15px Cambria';ctx.textAlign='right';ctx.textBaseline='middle';gridTemps.forEach(t=>ctx.fillText(formatNum(t),gx0-10,ym(t)));ctx.restore();
+  if(v('graphStyle')!=='blank'){
+    ctx.save();ctx.strokeStyle='#ef4444';ctx.fillStyle='#ef4444';ctx.lineWidth=n('graphWidth');ctx.beginPath();
+    rows.forEach((r,i)=>{const x=xm(r.acidVol),y=ym(r.temp);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+    rows.forEach(r=>{ctx.beginPath();ctx.arc(xm(r.acidVol),ym(r.temp),3.5,0,Math.PI*2);ctx.fill();});ctx.restore();
+  }
+  drawBottomVolumeLabels(ctx,rows,gx0,gy0,gx1,acid().formula+' 수용액의 부피(mL)',base().formula+' 수용액의 부피(mL)');
+}
+function drawBottomVolumeLabels(ctx,rows,gx0,gy0,gx1,acidLabel,baseLabel){
+  ctx.save();ctx.fillStyle='#111';ctx.textBaseline='top';
+
+  // 부피 이름은 왼쪽 여백에, 숫자는 축 아래에 배치해서 잘림을 막는다.
+  ctx.font='14px Malgun Gothic';
+  ctx.textAlign='right';
+  ctx.fillText(acidLabel,gx0-10,gy0+8);
+  ctx.fillText(baseLabel,gx0-10,gy0+34);
+
+  ctx.font='16px Cambria';
+  ctx.textAlign='center';
+  rows.forEach(r=>{
+    const x=gx0+r.acidVol/n('totalVolume')*(gx1-gx0);
+    ctx.fillText(formatNum(r.acidVol),x,gy0+8);
+    ctx.fillText(formatNum(r.baseVol),x,gy0+34);
+    ctx.fillText(r.label,x,gy0+62);
+  });
+  ctx.restore();
+}
+function formatNum(x){return Math.abs(x-Math.round(x))<1e-9?String(Math.round(x)):String(Math.round(x*10)/10)}
+function drawAll(){drawBeakers();drawSimpleGraph(cv.total,'전체','total');drawSimpleGraph(cv.cation,'양이온','cation');drawSimpleGraph(cv.anion,'음이온','anion');drawTemperatureGraph(cv.temp);const dir=v('direction')==='baseToAcid'?`${base().formula} 용액을 ${acid().formula} 용액에 넣는 경우`:`${acid().formula} 용액을 ${base().formula} 용액에 넣는 경우`;const addEq=formatNum(equivalenceAddedVolume());const mixEq=formatNum(equivalenceAcidVolume());summary.innerHTML=`<b>${dir}</b><br>산 ${n('acidChunks')}덩어리/10 mL, 염기 ${n('baseChunks')}덩어리/10 mL 기준입니다.<br>이온 수 그래프의 중화점은 넣는 용액 ${addEq} mL 지점입니다. 온도 그래프의 중화점은 산 수용액 ${mixEq} mL 지점입니다.`}
+function resetDefault(){acidPreset.value='HCl';basePreset.value='NaOH';direction.value='baseToAcid';state.value='eq';resultView.value='hide';acidChunks.value='3';baseChunks.value='3';totalVolume.value='12';pointCount.value='5';baseTemp.value='24';tempRise.value='4';axisWidth.value='2';dashWidth.value='1.2';graphWidth.value='2.5';graphStyle.value='line';drawAll()}
+function setImageExample(){acidPreset.value='HCl';basePreset.value='NaOH';direction.value='baseToAcid';state.value='eq';resultView.value='hide';acidChunks.value='3';baseChunks.value='3';totalVolume.value='12';pointCount.value='5';baseTemp.value='24';tempRise.value='4';drawAll()}
+function savePNG(){drawAll();const out=document.createElement('canvas');out.width=1160;out.height=920;const c=out.getContext('2d');c.fillStyle='white';c.fillRect(0,0,out.width,out.height);c.font='30px Malgun Gothic';c.fillStyle='#111';c.textAlign='center';c.fillText('중화반응 그래프',580,40);c.font='19px Malgun Gothic';c.fillText('전체 이온 수',290,78);c.fillText('양이온 수',870,78);c.fillText('음이온 수',290,482);c.fillText('혼합 용액의 최고 온도',870,482);c.drawImage(cv.total,30,98,520,340);c.drawImage(cv.cation,610,98,520,340);c.drawImage(cv.anion,30,502,520,340);c.drawImage(cv.temp,610,502,520,390);const a=document.createElement('a');a.download='neutralization_graph_v5_2.png';a.href=out.toDataURL('image/png');a.click()}
+document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',drawAll);el.addEventListener('change',drawAll)});window.onload=drawAll;
+</script>
+</body>
+</html>

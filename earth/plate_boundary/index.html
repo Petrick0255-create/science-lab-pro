@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>판 경계 지도와 연령 그래프</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
+  background:#f4f7fb;
+  color:#111827;
+}
+header{
+  background:linear-gradient(135deg,#0f172a,#1e3a8a);
+  color:white;
+  padding:14px;
+  text-align:center;
+  font-weight:800;
+  line-height:1.5;
+}
+.container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:10px;
+}
+.card{
+  background:white;
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:10px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+label{
+  font-size:12px;
+  font-weight:700;
+  color:#374151;
+  display:block;
+  margin-bottom:4px;
+}
+select,input,button{
+  width:100%;
+  min-height:36px;
+  padding:6px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+  background:white;
+}
+button{
+  border:none;
+  background:#2563eb;
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+}
+button:hover{background:#1d4ed8}
+.status{
+  padding:10px;
+  border-radius:10px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:8px;
+  line-height:1.6;
+}
+.divergent{background:#dcfce7;color:#166534}
+.convergent{background:#fee2e2;color:#991b1b}
+.transform{background:#fef3c7;color:#92400e}
+.none{background:#e5e7eb;color:#374151}
+.visual-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.canvas-wrap{
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:8px;
+}
+.canvas-title{
+  text-align:center;
+  font-weight:800;
+  margin-bottom:6px;
+  font-size:14px;
+}
+canvas{
+  width:100%;
+  height:360px;
+  display:block;
+  background:white;
+  border-radius:10px;
+}
+.result{
+  white-space:pre-line;
+  line-height:1.65;
+  font-size:14px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+th,td{
+  border:1px solid #d1d5db;
+  padding:6px;
+  text-align:center;
+}
+th{background:#f3f4f6}
+.small{
+  font-size:12px;
+  color:#6b7280;
+  line-height:1.5;
+  margin-top:6px;
+}
+.home{
+  display:inline-block;
+  color:white;
+  text-decoration:none;
+  font-size:13px;
+  margin-top:6px;
+  opacity:.8;
+}
+@media(max-width:760px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .visual-grid{grid-template-columns:1fr}
+  canvas{height:310px}
+}
+@media(max-width:480px){
+  .grid{grid-template-columns:1fr 1fr}
+  input,select{font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  판 경계 지도와 연령 그래프<br>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<div class="container">
+
+  <div class="card grid">
+    <div>
+      <label>경계 방향</label>
+      <select id="boundaryDir">
+        <option value="vertical">세로 경계</option>
+        <option value="horizontal">가로 경계</option>
+      </select>
+    </div>
+
+    <div>
+      <label>판 1 방향</label>
+      <select id="plate1Dir">
+        <option value="left">왼쪽</option>
+        <option value="right">오른쪽</option>
+        <option value="up">위</option>
+        <option value="down">아래</option>
+      </select>
+    </div>
+
+    <div>
+      <label>판 1 속도 cm/년</label>
+      <input id="plate1Speed" type="number" value="3" min="0.1" max="30" step="0.5">
+    </div>
+
+    <div>
+      <label>판 2 방향</label>
+      <select id="plate2Dir">
+        <option value="left">왼쪽</option>
+        <option value="right" selected>오른쪽</option>
+        <option value="up">위</option>
+        <option value="down">아래</option>
+      </select>
+    </div>
+
+    <div>
+      <label>판 2 속도 cm/년</label>
+      <input id="plate2Speed" type="number" value="8" min="0.1" max="30" step="0.5">
+    </div>
+
+    <div>
+      <label>연령 그래프 최대값</label>
+      <input id="ageMax" type="number" value="9" min="2" max="50" step="1">
+    </div>
+
+    <div>
+      <label>거리 범위</label>
+      <input id="distMax" type="number" value="10" min="3" max="50" step="1">
+    </div>
+
+    <div>
+      <label>격자</label>
+      <select id="showGrid">
+        <option value="yes">보기</option>
+        <option value="no">숨기기</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <button onclick="drawAll()">그리기</button>
+  </div>
+
+  <div class="card">
+    <div id="status" class="status divergent">계산 전</div>
+    <div class="visual-grid">
+      <div class="canvas-wrap">
+        <div class="canvas-title">위에서 본 판 경계</div>
+        <canvas id="mapCanvas" width="520" height="360"></canvas>
+      </div>
+      <div class="canvas-wrap">
+        <div class="canvas-title">거리와 연령</div>
+        <canvas id="graphCanvas" width="520" height="360"></canvas>
+      </div>
+    </div>
+    <div class="small">
+      판의 수직 상대속도로 수렴형/발산형을 판단하고, 수직 상대속도가 0이면서 평행 상대속도가 있으면 보존형으로 판단합니다.
+    </div>
+  </div>
+
+  <div class="card result" id="resultText">아직 계산 전입니다.</div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>값</th>
+        </tr>
+      </thead>
+      <tbody id="summaryTable"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const dirName = {left:"왼쪽", right:"오른쪽", up:"위", down:"아래"};
+
+function fmt(x){
+  if(Math.abs(x) < 1e-10) return "0";
+  return Number(x).toFixed(2).replace(/\.?0+$/,"");
+}
+
+function velocityVector(direction, speed){
+  if(direction === "left") return [-speed, 0];
+  if(direction === "right") return [speed, 0];
+  if(direction === "up") return [0, speed];
+  if(direction === "down") return [0, -speed];
+  return [0, 0];
+}
+
+function dot(a,b){return a[0]*b[0] + a[1]*b[1];}
+
+function getBoundaryVectors(){
+  const boundary = document.getElementById("boundaryDir").value;
+  if(boundary === "vertical"){
+    return {tangent:[0,1], normal:[1,0]};
+  }
+  return {tangent:[1,0], normal:[0,1]};
+}
+
+function classifyBoundary(v1, v2){
+  const {tangent, normal} = getBoundaryVectors();
+  const n1 = dot(v1, normal);
+  const n2 = dot(v2, normal);
+  const t1 = dot(v1, tangent);
+  const t2 = dot(v2, tangent);
+
+  const normalRelative = n2 - n1;
+  const tangentRelative = t2 - t1;
+
+  let type;
+  if(normalRelative > 0){
+    type = "발산형 경계";
+  }else if(normalRelative < 0){
+    type = "수렴형 경계";
+  }else if(Math.abs(tangentRelative) > 1e-10){
+    type = "보존형 경계";
+  }else{
+    type = "경계 아님";
+  }
+
+  return {type, normalRelative, tangentRelative, n1, n2, t1, t2};
+}
+
+function setStatus(type, normalRelative, tangentRelative){
+  const status = document.getElementById("status");
+  let cls = "status none";
+  if(type === "발산형 경계") cls = "status divergent";
+  if(type === "수렴형 경계") cls = "status convergent";
+  if(type === "보존형 경계") cls = "status transform";
+
+  status.className = cls;
+  status.textContent = `경계 유형: ${type} / 수직 상대속도: ${fmt(Math.abs(normalRelative))} cm/년 / 평행 상대속도: ${fmt(Math.abs(tangentRelative))} cm/년`;
+}
+
+function clearCanvas(canvas){
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "white";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  return ctx;
+}
+
+function drawArrow(ctx, x, y, vx, vy, scale=9){
+  let dx = vx * scale;
+  let dy = -vy * scale;
+  const len = Math.hypot(dx,dy);
+  if(len === 0) return;
+  const maxLen = 85;
+  if(len > maxLen){
+    dx = dx / len * maxLen;
+    dy = dy / len * maxLen;
+  }
+  const angle = Math.atan2(dy, dx);
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.fillStyle = "#111827";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(x+dx,y+dy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x+dx,y+dy);
+  ctx.lineTo(x+dx-13*Math.cos(angle-Math.PI/6), y+dy-13*Math.sin(angle-Math.PI/6));
+  ctx.lineTo(x+dx-13*Math.cos(angle+Math.PI/6), y+dy-13*Math.sin(angle+Math.PI/6));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawMap(type, v1, v2){
+  const canvas = document.getElementById("mapCanvas");
+  const ctx = clearCanvas(canvas);
+  const w = canvas.width;
+  const h = canvas.height;
+  const boundary = document.getElementById("boundaryDir").value;
+
+  ctx.save();
+  ctx.font = "14px Malgun Gothic, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if(boundary === "vertical"){
+    ctx.fillStyle = "rgba(37,99,235,0.08)";
+    ctx.fillRect(0,0,w/2,h);
+    ctx.fillStyle = "rgba(37,99,235,0.16)";
+    ctx.fillRect(w/2,0,w/2,h);
+
+    drawBoundaryLineVertical(ctx, type, w/2, h);
+    drawArrow(ctx, w*0.25, h*0.52, v1[0], v1[1]);
+    drawArrow(ctx, w*0.75, h*0.52, v2[0], v2[1]);
+
+    ctx.fillStyle = "#111827";
+    ctx.fillText("판 1", w*0.25, h*0.35);
+    ctx.fillText("판 2", w*0.75, h*0.35);
+  }else{
+    ctx.fillStyle = "rgba(37,99,235,0.08)";
+    ctx.fillRect(0,h/2,w,h/2);
+    ctx.fillStyle = "rgba(37,99,235,0.16)";
+    ctx.fillRect(0,0,w,h/2);
+
+    drawBoundaryLineHorizontal(ctx, type, w, h/2);
+    drawArrow(ctx, w*0.32, h*0.72, v1[0], v1[1]);
+    drawArrow(ctx, w*0.68, h*0.28, v2[0], v2[1]);
+
+    ctx.fillStyle = "#111827";
+    ctx.fillText("판 1", w*0.32, h*0.84);
+    ctx.fillText("판 2", w*0.68, h*0.16);
+  }
+
+  ctx.font = "bold 15px Malgun Gothic, sans-serif";
+  ctx.fillText(type, w/2, 28);
+  ctx.restore();
+}
+
+function drawBoundaryLineVertical(ctx, type, x, h){
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x, 20);
+  ctx.lineTo(x, h-20);
+  ctx.stroke();
+
+  if(type === "발산형 경계"){
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x-10,20); ctx.lineTo(x-10,h-20); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+10,20); ctx.lineTo(x+10,h-20); ctx.stroke();
+  }
+  if(type === "수렴형 경계"){
+    ctx.lineWidth = 2;
+    for(let y=70;y<h-40;y+=55){
+      ctx.beginPath();
+      ctx.moveTo(x+12,y-16);
+      ctx.lineTo(x+36,y);
+      ctx.lineTo(x+12,y+16);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawBoundaryLineHorizontal(ctx, type, w, y){
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(20, y);
+  ctx.lineTo(w-20, y);
+  ctx.stroke();
+
+  if(type === "발산형 경계"){
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(20,y-10); ctx.lineTo(w-20,y-10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20,y+10); ctx.lineTo(w-20,y+10); ctx.stroke();
+  }
+  if(type === "수렴형 경계"){
+    ctx.lineWidth = 2;
+    for(let x=70;x<w-40;x+=65){
+      ctx.beginPath();
+      ctx.moveTo(x-18,y+12);
+      ctx.lineTo(x,y+36);
+      ctx.lineTo(x+18,y+12);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawGraph(type, n1, n2){
+  const canvas = document.getElementById("graphCanvas");
+  const ctx = clearCanvas(canvas);
+  const w = canvas.width;
+  const h = canvas.height;
+  const margin = {left:48, right:18, top:24, bottom:42};
+  const plotW = w - margin.left - margin.right;
+  const plotH = h - margin.top - margin.bottom;
+  const distMax = Number(document.getElementById("distMax").value);
+  const ageMax = Number(document.getElementById("ageMax").value);
+  const showGrid = document.getElementById("showGrid").value === "yes";
+
+  function X(x){return margin.left + (x + distMax) / (2*distMax) * plotW;}
+  function Y(y){return margin.top + plotH - y / ageMax * plotH;}
+
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 1.5;
+
+  if(showGrid){
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    for(let i=0;i<=10;i++){
+      const x = margin.left + plotW*i/10;
+      ctx.beginPath(); ctx.moveTo(x,margin.top); ctx.lineTo(x,margin.top+plotH); ctx.stroke();
+    }
+    for(let i=0;i<=6;i++){
+      const y = margin.top + plotH*i/6;
+      ctx.beginPath(); ctx.moveTo(margin.left,y); ctx.lineTo(margin.left+plotW,y); ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(margin.left, Y(0)); ctx.lineTo(margin.left+plotW, Y(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(0), margin.top); ctx.lineTo(X(0), margin.top+plotH); ctx.stroke();
+
+  const s1 = Math.max(Math.abs(n1), 0.1);
+  const s2 = Math.max(Math.abs(n2), 0.1);
+
+  function ageLeft(x){
+    if(type === "발산형 경계") return Math.abs(x)/s1;
+    if(type === "수렴형 경계") return (x + distMax)/s1;
+    if(type === "보존형 경계") return ageMax*0.28;
+    return ageMax*0.45;
+  }
+  function ageRight(x){
+    if(type === "발산형 경계") return Math.abs(x)/s2;
+    if(type === "수렴형 경계") return (distMax - x)/s2;
+    if(type === "보존형 경계") return ageMax*0.72;
+    return ageMax*0.45;
+  }
+
+  drawCurve(ctx, -distMax, 0, ageLeft, X, Y, ageMax);
+  drawCurve(ctx, 0, distMax, ageRight, X, Y, ageMax);
+
+  ctx.fillStyle = "#111827";
+  ctx.font = "13px Malgun Gothic, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("경계로부터의 거리", margin.left + plotW/2, h-12);
+
+  ctx.save();
+  ctx.translate(15, margin.top + plotH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText("연령", 0, 0);
+  ctx.restore();
+
+  ctx.font = "11px Malgun Gothic, sans-serif";
+  ctx.fillText("0", X(0), Y(0)+16);
+  ctx.fillText("경계", X(0), margin.top+12);
+
+  ctx.restore();
+}
+
+function drawCurve(ctx, x0, x1, fn, X, Y, ageMax){
+  ctx.save();
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  const steps = 160;
+  for(let i=0;i<=steps;i++){
+    const x = x0 + (x1-x0)*i/steps;
+    const y = Math.min(fn(x), ageMax);
+    const px = X(x);
+    const py = Y(y);
+    if(i===0) ctx.moveTo(px,py);
+    else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function makeSummaryTable(d){
+  const rows = [
+    ["판 1 속도 벡터", `(${fmt(d.v1[0])}, ${fmt(d.v1[1])}) cm/년`],
+    ["판 2 속도 벡터", `(${fmt(d.v2[0])}, ${fmt(d.v2[1])}) cm/년`],
+    ["판 1 수직 성분", `${fmt(d.n1)} cm/년`],
+    ["판 2 수직 성분", `${fmt(d.n2)} cm/년`],
+    ["수직 상대속도", `${fmt(d.normalRelative)} cm/년`],
+    ["평행 상대속도", `${fmt(d.tangentRelative)} cm/년`],
+    ["판 경계 유형", d.type]
+  ];
+
+  document.getElementById("summaryTable").innerHTML =
+    rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+}
+
+function drawAll(){
+  const p1Dir = document.getElementById("plate1Dir").value;
+  const p2Dir = document.getElementById("plate2Dir").value;
+  const p1Speed = Number(document.getElementById("plate1Speed").value);
+  const p2Speed = Number(document.getElementById("plate2Speed").value);
+
+  if(p1Speed <= 0 || p2Speed <= 0){
+    alert("판의 속도는 0보다 커야 합니다.");
+    return;
+  }
+
+  const v1 = velocityVector(p1Dir, p1Speed);
+  const v2 = velocityVector(p2Dir, p2Speed);
+  const result = classifyBoundary(v1, v2);
+
+  setStatus(result.type, result.normalRelative, result.tangentRelative);
+  drawMap(result.type, v1, v2);
+  drawGraph(result.type, result.n1, result.n2);
+
+  let interpretation = "";
+  if(result.type === "발산형 경계"){
+    interpretation = "두 판이 경계에서 멀어지는 성분을 가지므로 발산형 경계입니다. 경계 부근에서 새 지각이 만들어진다고 보면, 경계에서 멀어질수록 연령이 증가합니다.";
+  }else if(result.type === "수렴형 경계"){
+    interpretation = "두 판이 경계 쪽으로 가까워지는 성분을 가지므로 수렴형 경계입니다. 오래된 지각이 경계 쪽으로 이동해 사라지는 모형이므로, 경계 쪽으로 갈수록 연령이 작아지는 형태로 표시했습니다.";
+  }else if(result.type === "보존형 경계"){
+    interpretation = "수직 상대속도는 0이고 평행 상대속도만 있으므로 보존형 경계입니다. 새 지각 생성이나 소멸을 중심으로 한 대칭적 연령 분포는 나타나지 않습니다.";
+  }else{
+    interpretation = "두 판 사이의 수직 상대속도와 평행 상대속도가 모두 0이므로 실제 경계로 보기 어렵습니다.";
+  }
+
+  document.getElementById("resultText").textContent =
+`판 1: ${dirName[p1Dir]}, ${fmt(p1Speed)} cm/년
+판 2: ${dirName[p2Dir]}, ${fmt(p2Speed)} cm/년
+
+경계 유형 = ${result.type}
+수직 상대속도 = ${fmt(Math.abs(result.normalRelative))} cm/년
+평행 상대속도 = ${fmt(Math.abs(result.tangentRelative))} cm/년
+
+해석: ${interpretation}`;
+
+  makeSummaryTable({v1, v2, ...result});
+}
+
+["boundaryDir","plate1Dir","plate2Dir","plate1Speed","plate2Speed","ageMax","distMax","showGrid"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", drawAll);
+  document.getElementById(id).addEventListener("change", drawAll);
+});
+
+drawAll();
+</script>
+</body>
+</html>

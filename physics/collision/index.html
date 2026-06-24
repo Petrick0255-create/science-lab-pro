@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>깔끔한 충돌 그래프 문항 제작기</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#eef3f8;color:#111}
+header{background:#1f2937;color:white;text-align:center;padding:12px;font-weight:800;font-size:17px}
+.home{display:inline-block;margin-top:6px;color:white;font-size:13px;text-decoration:none;opacity:.85}
+.container{max-width:1250px;margin:0 auto;padding:10px}
+.card{background:white;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+label{font-size:12px;font-weight:800;color:#333}
+input,select,button{width:100%;min-height:34px;padding:6px;font-size:14px;border-radius:8px;border:1px solid #cfd4dc}
+button{border:none;background:#2563eb;color:white;font-weight:800;cursor:pointer}
+button.secondary{background:#4b5563}
+button.dark{background:#111827}
+button.warn{background:#dc2626}
+.canvas-wrap{overflow:auto;background:#f8fafc;border-radius:12px;padding:8px}
+canvas{display:block;margin:0 auto;background:white;border:1px solid #ddd}
+.ok{background:#dcfce7;color:#166534;border-radius:10px;padding:10px;font-weight:800;white-space:pre-line}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border:1px solid #ddd;padding:5px;text-align:center}
+th{background:#f3f4f6}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+
+<body>
+
+<header>
+  ⚛️ 깔끔한 충돌 그래프 문항 제작기<br>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<div class="container">
+
+<div class="card grid">
+  <div><label>A 질량 kg</label><input id="mA" type="number" value="5"></div>
+  <div><label>B 질량 kg</label><input id="mB" type="number" value="2"></div>
+  <div><label>C 질량 kg</label><input id="mC" type="number" value="3"></div>
+  <div><label>A 초기 속력</label><input id="roughVA" type="number" value="4"></div>
+
+  <div><label>B 초기 속력</label><input id="roughVB" type="number" value="0"></div>
+  <div><label>전체 시간(s)</label><input id="totalTime" type="number" value="5" step="0.1"></div>
+  <div><label>슬로우 배속</label><input id="playSpeed" type="number" value="0.35" step="0.05"></div>
+
+  <div>
+    <label>그래프 종류</label>
+    <select id="graphMode">
+      <option value="momentum" selected>운동량 변화</option>
+      <option value="velocity">속도 변화</option>
+      <option value="distance">이동 거리 변화</option>
+    </select>
+  </div>
+
+  <div><label>그림 폭</label><input id="canvasWidth" type="number" value="980"></div>
+  <div><label>A 그래프</label><select id="showA"><option value="yes" selected>표시</option><option value="no">숨김</option></select></div>
+  <div><label>B 그래프</label><select id="showB"><option value="yes" selected>표시</option><option value="no">숨김</option></select></div>
+  <div><label>C 그래프</label><select id="showC"><option value="yes" selected>표시</option><option value="no">숨김</option></select></div>
+  <div><label>바닥 글씨</label><input id="surfaceText" value="수평면"></div>
+</div>
+
+<div class="card grid">
+  <button onclick="autoExample()">깔끔한 예시 자동 생성</button>
+  <button onclick="play()">▶ 슬로우 재생</button>
+  <button class="secondary" onclick="pause()">일시정지</button>
+  <button class="secondary" onclick="stepNext()">한 단계 후</button>
+  <button class="dark" onclick="saveImage()">PNG 저장</button>
+  <button class="warn" onclick="resetAll()">초기화</button>
+</div>
+
+<div class="card">
+  <div id="summary" class="ok">자동 생성 전입니다.</div>
+</div>
+
+<div class="card canvas-wrap">
+  <canvas id="canvas" width="980" height="680"></canvas>
+</div>
+
+<div class="card">
+<table>
+<thead>
+<tr>
+  <th>시각</th>
+  <th>A 운동량</th><th>B 운동량</th><th>C 운동량</th>
+  <th>A 속도</th><th>B 속도</th><th>C 속도</th>
+  <th>A 이동거리</th><th>B 이동거리</th><th>C 이동거리</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+let caseData=null;
+let frames=[];
+let frameIndex=0;
+let timer=null;
+
+function E(id){return document.getElementById(id)}
+function N(id){return Number(E(id).value)}
+function V(id){return E(id).value}
+function fmt(x){return Number(x).toFixed(1).replace(/\.0$/,"")}
+
+function clean(x){
+  return Math.abs(x-Math.round(x))<1e-9;
+}
+
+function round1(x){
+  return Math.round(x*10)/10;
+}
+
+function round2(x){
+  return Math.round(x*100)/100;
+}
+
+function autoExample(){
+  pause();
+
+  const mA=N("mA"), mB=N("mB"), mC=N("mC");
+  const roughA=N("roughVA");
+  const roughB=N("roughVB");
+  const total=N("totalTime");
+
+  let candidates=[];
+
+  for(let vA0=Math.max(1,Math.round(roughA)-3); vA0<=Math.round(roughA)+3; vA0++){
+    for(let vB0=Math.round(roughB)-3; vB0<=Math.round(roughB)+3; vB0++){
+
+      if(vA0<=vB0) continue;
+
+      for(let vA1=0; vA1<vA0; vA1++){
+        const pA0=mA*vA0;
+        const pB0=mB*vB0;
+        const totalAB=pA0+pB0;
+
+        const pA1=mA*vA1;
+        const pB1=totalAB-pA1;
+        const vB1=pB1/mB;
+
+        if(!clean(vB1) || vB1<=vB0) continue;
+
+        for(let vB2=0; vB2<vB1; vB2++){
+          const pB2=mB*vB2;
+          const pC2=pB1-pB2;
+          const vC2=pC2/mC;
+
+          if(!clean(vC2) || vC2<=0) continue;
+
+          for(let t1=0.8;t1<=2.0;t1+=0.1){
+            for(let d1 of [0.2,0.3,0.4]){
+              for(let t2=t1+d1+0.6;t2<=Math.min(total-0.5,4.0);t2+=0.1){
+                const d2=0.2;
+
+                const xA0=0;
+                const wA=0.5, wB=0.6, wC=0.6;
+
+                const xB0=xA0+wA+(vA0-vB0)*t1;
+
+                const xBAtT2=xB0+vB0*t1+vB1*(t2-(t1+d1));
+                const xC0=xBAtT2+wB;
+
+                const score =
+                  Math.abs(vA0-roughA)*3 +
+                  Math.abs(vB0-roughB)*3 +
+                  Math.abs(t1*10-Math.round(t1*10)) +
+                  Math.abs(t2*10-Math.round(t2*10));
+
+                candidates.push({
+                  score,mA,mB,mC,
+                  w:{A:wA,B:wB,C:wC},
+                  x0:{A:xA0,B:xB0,C:xC0},
+                  v0:{A:vA0,B:vB0,C:0},
+                  t1:round1(t1),
+                  d1,
+                  t2:round1(t2),
+                  d2,
+                  p:{
+                    A0:pA0,
+                    A1:pA1,
+                    B0:pB0,
+                    B1:pB1,
+                    B2:pB2,
+                    C0:0,
+                    C2:pC2
+                  },
+                  v:{
+                    A0:vA0,
+                    A1:vA1,
+                    B0:vB0,
+                    B1:vB1,
+                    B2:vB2,
+                    C0:0,
+                    C2:vC2
+                  },
+                  J1:pA1-pA0,
+                  J2:pB2-pB1
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if(!candidates.length){
+    alert("깔끔한 예시를 못 찾았습니다. A 속력을 키우거나, B 속력을 낮추거나, 질량을 2~5 자연수로 바꿔보세요.");
+    return;
+  }
+
+  candidates.sort((a,b)=>a.score-b.score);
+  caseData=candidates[0];
+
+  buildFrames();
+  frameIndex=0;
+  drawFrame();
+  makeTable();
+  writeSummary();
+}
+
+function momentumAt(t,c){
+  let pA=c.p.A0;
+  let pB=c.p.B0;
+  let pC=c.p.C0;
+
+  if(t>=c.t1 && t<=c.t1+c.d1){
+    const r=(t-c.t1)/c.d1;
+    pA=c.p.A0+(c.p.A1-c.p.A0)*r;
+    pB=c.p.B0+(c.p.B1-c.p.B0)*r;
+  }else if(t>c.t1+c.d1){
+    pA=c.p.A1;
+    pB=c.p.B1;
+  }
+
+  if(t>=c.t2 && t<=c.t2+c.d2){
+    const r=(t-c.t2)/c.d2;
+    pB=c.p.B1+(c.p.B2-c.p.B1)*r;
+    pC=c.p.C0+(c.p.C2-c.p.C0)*r;
+  }else if(t>c.t2+c.d2){
+    pB=c.p.B2;
+    pC=c.p.C2;
+  }
+
+  return {A:pA,B:pB,C:pC};
+}
+
+function buildFrames(){
+  if(!caseData) return;
+
+  const c=caseData;
+  frames=[];
+
+  const dt=0.01;
+  let x={A:c.x0.A,B:c.x0.B,C:c.x0.C};
+
+  for(let t=0;t<=N("totalTime")+1e-9;t+=dt){
+    const p=momentumAt(t,c);
+    const v={
+      A:p.A/c.mA,
+      B:p.B/c.mB,
+      C:p.C/c.mC
+    };
+
+    if(frames.length){
+      const pv=frames[frames.length-1].v;
+      x.A+=pv.A*dt;
+      x.B+=pv.B*dt;
+      x.C+=pv.C*dt;
+    }
+
+    frames.push({
+      t:round2(t),
+      p:{...p},
+      v:{...v},
+      x:{...x},
+      d:{
+        A:x.A-c.x0.A,
+        B:x.B-c.x0.B,
+        C:x.C-c.x0.C
+      }
+    });
+  }
+}
+
+function writeSummary(){
+  const c=caseData;
+
+  E("summary").textContent =
+`깔끔한 예시 생성 완료
+
+질량
+A=${c.mA}kg, B=${c.mB}kg, C=${c.mC}kg
+
+초기 속도
+A=${fmt(c.v.A0)}m/s, B=${fmt(c.v.B0)}m/s, C=0m/s
+
+A-B 충돌
+시간: ${fmt(c.t1)}s ~ ${fmt(c.t1+c.d1)}s
+A가 받은 충격량: ${fmt(c.J1)}N·s
+B가 받은 충격량: ${fmt(-c.J1)}N·s
+운동량: A ${fmt(c.p.A0)} → ${fmt(c.p.A1)}, B ${fmt(c.p.B0)} → ${fmt(c.p.B1)}
+
+B-C 충돌
+시간: ${fmt(c.t2)}s ~ ${fmt(c.t2+c.d2)}s
+B가 받은 충격량: ${fmt(c.J2)}N·s
+C가 받은 충격량: ${fmt(-c.J2)}N·s
+운동량: B ${fmt(c.p.B1)} → ${fmt(c.p.B2)}, C 0 → ${fmt(c.p.C2)}
+
+그래프의 꺾이는 시각은 모두 소수점 첫째 자리로 떨어집니다.
+운동량과 속도 값은 정수로 떨어집니다.`;
+}
+
+function drawFrame(){
+  if(!caseData) return;
+
+  const c=caseData;
+  const f=frames[frameIndex] || frames[0];
+
+  canvas.width=Math.max(760,N("canvasWidth"));
+  canvas.height=680;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="white";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  drawScene(c,f);
+  drawGraph(c,f);
+}
+
+function maxSceneX(){
+  const c=caseData;
+  return Math.max(
+    ...frames.map(f=>Math.max(f.x.A+c.w.A,f.x.B+c.w.B,f.x.C+c.w.C)),
+    10
+  );
+}
+
+function mapSceneX(x){
+  const left=70,right=canvas.width-45;
+  return left+x/maxSceneX()*(right-left);
+}
+
+function drawScene(c,f){
+  const groundY=230;
+
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(35,groundY);
+  ctx.lineTo(canvas.width-35,groundY);
+  ctx.stroke();
+
+  const squash = getSquashByCollisionTime(c,f.t);
+
+  const visualX = getVisualBlockX(c,f);
+
+  drawBlock("A",c.mA,c.w.A,visualX.A,f.v.A,groundY,squash.A);
+  drawBlock("B",c.mB,c.w.B,visualX.B,f.v.B,groundY,squash.B);
+  drawBlock("C",c.mC,c.w.C,visualX.C,f.v.C,groundY,squash.C);
+
+  ctx.fillStyle="#111";
+  ctx.font="bold 24px Arial";
+  ctx.textAlign="left";
+  ctx.fillText(`t = ${fmt(f.t)} s`,40,42);
+
+  ctx.font="bold 15px Arial";
+  ctx.fillText(stateText(f.t,c),40,72);
+
+  ctx.font="16px serif";
+  ctx.fillText(V("surfaceText"),40,groundY+28);
+}
+
+function stateText(t,c){
+  if(t>=c.t1 && t<=c.t1+c.d1) return "A-B 충돌 중";
+  if(t>=c.t2 && t<=c.t2+c.d2) return "B-C 충돌 중";
+  return "등속 운동 중";
+}
+
+function getSquashByCollisionTime(c,t){
+  const squash={A:0,B:0,C:0};
+
+  function smoothSquash(t,start,duration){
+    if(t<start || t>start+duration) return 0;
+
+    const r=(t-start)/duration;
+
+    // 0 → 1 → 0
+    return Math.sin(Math.PI*r);
+  }
+
+  const sAB=smoothSquash(t,c.t1,c.d1);
+  squash.A=Math.max(squash.A,sAB);
+  squash.B=Math.max(squash.B,sAB);
+
+  const sBC=smoothSquash(t,c.t2,c.d2);
+  squash.B=Math.max(squash.B,sBC);
+  squash.C=Math.max(squash.C,sBC);
+
+  return squash;
+}
+
+function getVisualBlockX(c,f){
+  const size=46;
+  const unitPerPixel=maxSceneX()/(canvas.width-115);
+  const blockGap=size*unitPerPixel;
+
+  let xA=f.x.A;
+  let xB=f.x.B;
+  let xC=f.x.C;
+
+  // A가 B를 뚫지 못하게
+  if(xA+blockGap>xB){
+    xA=xB-blockGap;
+  }
+
+  // B가 C를 뚫지 못하게
+  if(xB+blockGap>xC){
+    xB=xC-blockGap;
+  }
+
+  return {A:xA,B:xB,C:xC};
+}
+
+function drawBlock(name,m,w,x,v,groundY,squish=0){
+  const px=mapSceneX(x);
+
+  const size=40;
+
+  const bw=size*(1-0.28*squish);
+  const bh=size*(1+0.18*squish);
+
+  const y=groundY-bh;
+  const drawX=px+(size-bw)/2;
+
+  ctx.fillStyle="#e8edf2";
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=1.4;
+  ctx.fillRect(drawX,y,bw,bh);
+  ctx.strokeRect(drawX,y,bw,bh);
+
+  ctx.fillStyle="#111";
+  ctx.font="15px serif";
+  ctx.textAlign="center";
+  ctx.fillText(name,drawX+bw/2,y-14);
+  ctx.fillText(`${fmt(m)} kg`,drawX+bw/2,y+bh/2+5);
+
+  if(Math.abs(v)>0.001){
+    const dir=v>0?1:-1;
+    const ay=y+bh/2;
+    const x1=dir>0?drawX+bw+10:drawX-10;
+    const x2=x1+dir*45;
+    drawArrow(x1,ay,x2,ay);
+    ctx.font="13px serif";
+    ctx.fillText(`v=${fmt(v)}`,(x1+x2)/2,ay-10);
+  }else{
+    ctx.font="15px serif";
+    ctx.fillText("정지",drawX+bw/2,groundY+26);
+  }
+}
+
+function drawArrow(x1,y1,x2,y2){
+  const h=9;
+  const a=Math.atan2(y2-y1,x2-x1);
+
+  ctx.strokeStyle="#111";
+  ctx.fillStyle="#111";
+  ctx.lineWidth=3;
+
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x2,y2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-h*Math.cos(a-Math.PI/6),y2-h*Math.sin(a-Math.PI/6));
+  ctx.lineTo(x2-h*Math.cos(a+Math.PI/6),y2-h*Math.sin(a+Math.PI/6));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawGraph(c,current){
+  const mode=V("graphMode");
+  const keys=["A","B","C"].filter(k=>V("show"+k)==="yes");
+
+  const top=330,bottom=635,left=70,right=canvas.width-55;
+  const tx=t=>left+t/N("totalTime")*(right-left);
+
+  let vals=[];
+  frames.forEach(f=>{
+    keys.forEach(k=>vals.push(getValue(f,k,mode)));
+  });
+
+  let min=Math.min(0,...vals);
+  let max=Math.max(...vals);
+
+  min=Math.floor(min);
+  max=Math.ceil(max);
+
+  if(max-min<1){
+    max+=1;
+    min-=1;
+  }
+
+  const ty=y=>bottom-(y-min)/(max-min)*(bottom-top);
+
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=1.5;
+  ctx.strokeRect(left,top,right-left,bottom-top);
+
+  [c.t1,c.t1+c.d1,c.t2,c.t2+c.d2].forEach(t=>{
+    ctx.strokeStyle="#aaa";
+    ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(tx(t),top);
+    ctx.lineTo(tx(t),bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  for(let yv=min; yv<=max; yv++){
+    const y=ty(yv);
+
+    ctx.strokeStyle="#d1d5db";
+    ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(left,y);
+    ctx.lineTo(right,y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle="#111";
+    ctx.font="12px Arial";
+    ctx.textAlign="right";
+    ctx.fillText(String(yv),left-8,y+4);
+  }
+
+  const colors={A:"#111",B:"#2563eb",C:"#dc2626"};
+
+  keys.forEach(k=>{
+    ctx.strokeStyle=colors[k];
+    ctx.lineWidth=2.4;
+    ctx.beginPath();
+
+    frames.forEach((f,i)=>{
+      const x=tx(f.t);
+      const y=ty(getValue(f,k,mode));
+
+      if(i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    });
+
+    ctx.stroke();
+
+    ctx.fillStyle=colors[k];
+    ctx.font="bold 14px Arial";
+    ctx.textAlign="left";
+    ctx.fillText(k,right-35,ty(getValue(current,k,mode)));
+  });
+
+  const cx=tx(current.t);
+  ctx.strokeStyle="#7c3aed";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(cx,top);
+  ctx.lineTo(cx,bottom);
+  ctx.stroke();
+
+  ctx.fillStyle="#111";
+  ctx.font="bold 16px Arial";
+  ctx.textAlign="left";
+  ctx.fillText(graphTitle(mode),left,top-14);
+
+  ctx.font="12px Arial";
+  ctx.fillText("시간(s)",right-48,bottom+22);
+
+  [c.t1,c.t1+c.d1,c.t2,c.t2+c.d2].forEach(t=>{
+    ctx.fillText(fmt(t),tx(t)-8,bottom+17);
+  });
+}
+
+function getValue(f,k,mode){
+  if(mode==="momentum") return f.p[k];
+  if(mode==="velocity") return f.v[k];
+  return f.d[k];
+}
+
+function graphTitle(mode){
+  if(mode==="momentum") return "운동량-시간 그래프";
+  if(mode==="velocity") return "속도-시간 그래프";
+  return "이동 거리-시간 그래프";
+}
+
+function play(){
+  if(!caseData) autoExample();
+  pause();
+
+  const speed=N("playSpeed") || 0.35;
+
+  timer=setInterval(()=>{
+    frameIndex++;
+
+    if(frameIndex>=frames.length){
+      frameIndex=frames.length-1;
+      pause();
+    }
+
+    drawFrame();
+  },20/speed);
+}
+
+function pause(){
+  if(timer){
+    clearInterval(timer);
+    timer=null;
+  }
+}
+
+function stepNext(){
+  if(!caseData) autoExample();
+
+  frameIndex=Math.min(frameIndex+5,frames.length-1);
+  drawFrame();
+}
+
+function makeTable(){
+  const tbody=E("table");
+  tbody.innerHTML="";
+
+  frames.filter((_,i)=>i%50===0).forEach(f=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${fmt(f.t)}</td>
+      <td>${fmt(f.p.A)}</td>
+      <td>${fmt(f.p.B)}</td>
+      <td>${fmt(f.p.C)}</td>
+      <td>${fmt(f.v.A)}</td>
+      <td>${fmt(f.v.B)}</td>
+      <td>${fmt(f.v.C)}</td>
+      <td>${fmt(f.d.A)}</td>
+      <td>${fmt(f.d.B)}</td>
+      <td>${fmt(f.d.C)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function saveImage(){
+  drawFrame();
+
+  const a=document.createElement("a");
+  a.download="clean_collision_graph.png";
+  a.href=canvas.toDataURL("image/png");
+  a.click();
+}
+
+function resetAll(){
+  pause();
+
+  E("mA").value=5;
+  E("mB").value=2;
+  E("mC").value=3;
+  E("roughVA").value=4;
+  E("roughVB").value=0;
+  E("totalTime").value=5;
+  E("playSpeed").value=0.35;
+  E("graphMode").value="momentum";
+  E("showA").value="yes";
+  E("showB").value="yes";
+  E("showC").value="yes";
+  E("canvasWidth").value=980;
+  E("surfaceText").value="수평면";
+
+  autoExample();
+}
+
+document.querySelectorAll("input,select").forEach(x=>{
+  x.addEventListener("input",()=>{
+    if(caseData){
+      autoExample();
+    }
+  });
+
+  x.addEventListener("change",()=>{
+    if(caseData){
+      autoExample();
+    }
+  });
+});
+
+resetAll();
+</script>
+
+</body>
+</html>

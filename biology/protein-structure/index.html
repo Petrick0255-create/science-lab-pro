@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단백질 구조와 유전자 정보 탐구</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
+  background:#f4f7fb;
+  color:#111827;
+}
+header{
+  background:linear-gradient(135deg,#064e3b,#166534);
+  color:white;
+  padding:14px;
+  text-align:center;
+  font-weight:900;
+  line-height:1.5;
+}
+.home{
+  display:inline-block;
+  color:white;
+  text-decoration:none;
+  font-size:13px;
+  margin-top:5px;
+  opacity:.85;
+}
+.container{
+  max-width:1220px;
+  margin:0 auto;
+  padding:12px;
+}
+.card{
+  background:white;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+.workspace{
+  display:grid;
+  grid-template-columns:1.15fr .85fr;
+  gap:12px;
+}
+label{
+  font-size:12px;
+  font-weight:800;
+  color:#374151;
+}
+select,input,button{
+  width:100%;
+  min-height:36px;
+  padding:6px;
+  border-radius:9px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+}
+button{
+  border:none;
+  background:#16a34a;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+}
+button:hover{background:#15803d}
+button.gray{background:#4b5563}
+canvas{
+  width:100%;
+  height:560px;
+  background:radial-gradient(circle at top,#ffffff,#e5e7eb);
+  border:1px solid #d1d5db;
+  border-radius:14px;
+  display:block;
+}
+.result{
+  white-space:pre-line;
+  line-height:1.7;
+  font-size:14px;
+}
+.sequence{
+  max-height:190px;
+  overflow:auto;
+  line-height:1.8;
+  font-size:13px;
+  word-break:break-all;
+}
+.aa{
+  display:inline-block;
+  padding:2px 6px;
+  margin:2px;
+  border-radius:999px;
+  font-weight:800;
+  color:white;
+}
+.hydro{background:#f97316}
+.polar{background:#3b82f6}
+.acidic{background:#ef4444}
+.basic{background:#8b5cf6}
+.special{background:#64748b}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th,td{
+  border:1px solid #d1d5db;
+  padding:6px;
+  text-align:center;
+}
+th{background:#f3f4f6}
+.small{
+  color:#6b7280;
+  font-size:12px;
+  line-height:1.5;
+}
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  margin:2px;
+  border-radius:999px;
+  background:#ecfdf5;
+  color:#166534;
+  font-size:12px;
+  font-weight:800;
+}
+@media(max-width:880px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .workspace{grid-template-columns:1fr}
+  canvas{height:460px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  🧬 단백질 구조와 유전자 정보 탐구<br>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<div class="container">
+
+  <div class="card grid">
+    <div>
+      <label>모드</label>
+      <select id="mode" onchange="changeMode()">
+        <option value="known">대표 단백질 보기</option>
+        <option value="custom">나만의 단백질 만들기</option>
+      </select>
+    </div>
+
+    <div id="knownBox">
+      <label>대표 단백질</label>
+      <select id="proteinSelect" onchange="loadKnownProtein()">
+        <option value="insulin">인슐린</option>
+        <option value="hemoglobin">헤모글로빈</option>
+        <option value="collagen">콜라겐</option>
+        <option value="antibody">항체</option>
+        <option value="amylase">아밀레이스</option>
+      </select>
+    </div>
+
+    <div id="customLenBox">
+      <label>아미노산 개수</label>
+      <input id="lengthInput" type="number" value="45" min="8" max="120">
+    </div>
+
+    <div id="customTypeBox">
+      <label>구조 성향</label>
+      <select id="customShape">
+        <option value="globular">둥근 단백질</option>
+        <option value="helix">나선 많은 단백질</option>
+        <option value="fiber">섬유형 단백질</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card grid">
+    <button onclick="mainAction()">적용 / 생성</button>
+    <button class="gray" onclick="toggleRotation()">회전 켜기/끄기</button>
+    <button class="gray" onclick="copySequence()">아미노산 서열 복사</button>
+    <button class="gray" onclick="downloadImage()">그림 저장</button>
+  </div>
+
+  <div class="workspace">
+
+    <div class="card">
+      <canvas id="proteinCanvas" width="760" height="560"></canvas>
+      <div class="small">
+        실제 의학적 진단용 구조가 아니라, 고등학교 생명과학 수준에서 유전자 → mRNA → 아미노산 → 단백질 구조를 연결해 보는 교육용 모형입니다.
+      </div>
+    </div>
+
+    <div>
+      <div class="card result" id="resultText">생성 전</div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>분류</th>
+              <th>개수</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <b>아미노산 서열</b>
+        <div class="sequence" id="sequenceBox"></div>
+      </div>
+
+      <div class="card">
+        <b>mRNA 코돈</b>
+        <div class="sequence" id="mrnaBox"></div>
+      </div>
+
+      <div class="card">
+        <b>DNA 주형 가닥</b>
+        <div class="sequence" id="dnaBox"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const canvas=document.getElementById("proteinCanvas");
+const ctx=canvas.getContext("2d");
+
+const aaInfo={
+  A:{three:"Ala",name:"알라닌",type:"hydro",codon:"GCU"},
+  V:{three:"Val",name:"발린",type:"hydro",codon:"GUU"},
+  L:{three:"Leu",name:"류신",type:"hydro",codon:"CUU"},
+  I:{three:"Ile",name:"아이소류신",type:"hydro",codon:"AUU"},
+  M:{three:"Met",name:"메티오닌",type:"hydro",codon:"AUG"},
+  F:{three:"Phe",name:"페닐알라닌",type:"hydro",codon:"UUU"},
+  W:{three:"Trp",name:"트립토판",type:"hydro",codon:"UGG"},
+  S:{three:"Ser",name:"세린",type:"polar",codon:"UCU"},
+  T:{three:"Thr",name:"트레오닌",type:"polar",codon:"ACU"},
+  N:{three:"Asn",name:"아스파라긴",type:"polar",codon:"AAU"},
+  Q:{three:"Gln",name:"글루타민",type:"polar",codon:"CAA"},
+  Y:{three:"Tyr",name:"타이로신",type:"polar",codon:"UAU"},
+  C:{three:"Cys",name:"시스테인",type:"polar",codon:"UGU"},
+  D:{three:"Asp",name:"아스파트산",type:"acidic",codon:"GAU"},
+  E:{three:"Glu",name:"글루탐산",type:"acidic",codon:"GAA"},
+  K:{three:"Lys",name:"라이신",type:"basic",codon:"AAA"},
+  R:{three:"Arg",name:"아르지닌",type:"basic",codon:"CGU"},
+  H:{three:"His",name:"히스티딘",type:"basic",codon:"CAU"},
+  G:{three:"Gly",name:"글라이신",type:"special",codon:"GGU"},
+  P:{three:"Pro",name:"프롤린",type:"special",codon:"CCU"}
+};
+
+const colors={
+  hydro:"#f97316",
+  polar:"#3b82f6",
+  acidic:"#ef4444",
+  basic:"#8b5cf6",
+  special:"#64748b"
+};
+
+const knownProteins={
+  insulin:{
+    name:"인슐린",
+    structure:"두 개의 짧은 사슬이 이황화 결합으로 연결된 호르몬 단백질",
+    medical:"혈당 조절과 관련됩니다. 인슐린 분비 또는 작용 이상은 당뇨병과 연결됩니다.",
+    shape:"insulin",
+    sequence:"GIVEQCCTSICSLYQLENYCNFVNQHLCGSHLVEALYLVCGERGFFYTPKT",
+    note:"실제 인슐린은 A사슬과 B사슬로 이루어지며, 여기서는 교육용으로 이어 붙여 표현했습니다."
+  },
+  hemoglobin:{
+    name:"헤모글로빈 β-글로빈",
+    structure:"산소 운반 단백질인 헤모글로빈의 한 소단위체",
+    medical:"β-글로빈의 한 아미노산 변화는 겸형 적혈구 빈혈과 연결됩니다. 대표적으로 Glu가 Val로 바뀌는 예가 자주 다뤄집니다.",
+    shape:"globular",
+    sequence:"MVHLTPEEKSAVTALWGKVNVDEVGGEALGRLLVVYPWTQRFFESFGDLSTPDAVMGNPKVKAHGKK",
+    note:"교육용으로 β-글로빈 앞부분을 일부 사용했습니다."
+  },
+  collagen:{
+    name:"콜라겐",
+    structure:"Gly-X-Y 반복이 많은 삼중 나선형 섬유 단백질",
+    medical:"피부, 힘줄, 뼈, 연골 등 결합 조직의 주요 성분입니다.",
+    shape:"collagen",
+    sequence:"GPPGPPGPPGAPGPRGEPGPPGPPGPPGAPGPPGPPGPPGPPGAPGPP",
+    note:"실제 콜라겐은 매우 긴 반복 서열을 가지며, 여기서는 Gly-Pro-Pro 반복을 단순화했습니다."
+  },
+  antibody:{
+    name:"항체",
+    structure:"Y자 모양으로 항원을 인식하는 면역 단백질",
+    medical:"감염 방어, 백신 반응, 자가면역 질환, 항체 치료제와 관련됩니다.",
+    shape:"antibody",
+    sequence:"EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKG",
+    note:"항체 가변 부위 느낌을 주는 교육용 일부 서열입니다."
+  },
+  amylase:{
+    name:"아밀레이스",
+    structure:"녹말을 분해하는 효소 단백질",
+    medical:"소화 효소이며, 침과 이자액에 존재합니다. 혈중 아밀레이스는 췌장 질환 검사에서 언급되기도 합니다.",
+    shape:"enzyme",
+    sequence:"MKFFLLLFTIGFCWAQYSPNTQQGRTSIVHLFEWRWVDIALECERYLAPKGFGGVQVSPPNENVAI",
+    note:"효소 구조와 활성 부위를 설명하기 위한 교육용 일부 서열입니다."
+  }
+};
+
+let residues=[];
+let points=[];
+let angle=0;
+let rotating=true;
+let currentProteinName="";
+
+function changeMode(){
+  const mode=document.getElementById("mode").value;
+  document.getElementById("knownBox").style.display=mode==="known"?"block":"none";
+  document.getElementById("customLenBox").style.display=mode==="custom"?"block":"none";
+  document.getElementById("customTypeBox").style.display=mode==="custom"?"block":"none";
+}
+
+function mainAction(){
+  if(document.getElementById("mode").value==="known") loadKnownProtein();
+  else generateCustomProtein();
+}
+
+function loadKnownProtein(){
+  const key=document.getElementById("proteinSelect").value;
+  const p=knownProteins[key];
+  currentProteinName=p.name;
+  residues=p.sequence.split("").map(x=>({one:x,...aaInfo[x]}));
+  makePoints(p.shape,residues.length);
+  updateInfo(p);
+  drawProtein();
+}
+
+function generateCustomProtein(){
+  const len=Number(document.getElementById("lengthInput").value);
+  const shape=document.getElementById("customShape").value;
+  currentProteinName="나만의 단백질";
+  residues=[];
+  const pool=Object.keys(aaInfo);
+
+  for(let i=0;i<len;i++){
+    const one=pool[Math.floor(Math.random()*pool.length)];
+    residues.push({one,...aaInfo[one]});
+  }
+
+  makePoints(shape,residues.length);
+  updateInfo({
+    name:"나만의 단백질",
+    structure:"입력 조건에 따라 생성한 교육용 단백질 모형",
+    medical:"실제 인체 단백질은 아니지만, 아미노산 성질과 코돈-서열 관계를 연습하는 데 사용할 수 있습니다.",
+    note:"랜덤 생성 서열이므로 실제 생물학적 기능을 가진다고 볼 수 없습니다."
+  });
+  drawProtein();
+}
+
+function makePoints(shape,len){
+  points=[];
+  if(shape==="insulin"){
+    for(let i=0;i<len;i++){
+      const chain=i<21?0:1;
+      const t=i*0.55;
+      points.push({
+        x:Math.cos(t)*70 + (chain===0?-80:80),
+        y:(i%28-14)*8,
+        z:Math.sin(t)*70
+      });
+    }
+  }else if(shape==="collagen" || shape==="fiber"){
+    for(let i=0;i<len;i++){
+      const t=i*0.45;
+      points.push({
+        x:(i-len/2)*7,
+        y:Math.sin(t)*45,
+        z:Math.cos(t)*45
+      });
+    }
+  }else if(shape==="antibody"){
+    for(let i=0;i<len;i++){
+      const branch=i%3;
+      const t=i/len;
+      points.push({
+        x:(branch-1)*90*t,
+        y:(t*260)-130,
+        z:Math.sin(i*.4)*60
+      });
+    }
+  }else if(shape==="enzyme" || shape==="globular"){
+    let x=0,y=0,z=0;
+    for(let i=0;i<len;i++){
+      x=(x+(Math.random()*60-30))*0.86;
+      y=(y+(Math.random()*60-30))*0.86;
+      z=(z+(Math.random()*60-30))*0.86;
+      points.push({x,y,z});
+    }
+  }else{
+    for(let i=0;i<len;i++){
+      const t=i*0.5;
+      points.push({
+        x:Math.cos(t)*90,
+        y:(i-len/2)*5,
+        z:Math.sin(t)*90
+      });
+    }
+  }
+}
+
+function project(p){
+  const cos=Math.cos(angle);
+  const sin=Math.sin(angle);
+  const x=p.x*cos-p.z*sin;
+  const z=p.x*sin+p.z*cos;
+  const y=p.y;
+  const depth=560;
+  const scale=depth/(depth+z);
+  return {
+    x:canvas.width/2+x*scale,
+    y:canvas.height/2+y*scale,
+    z,
+    scale
+  };
+}
+
+function drawProtein(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const grad=ctx.createRadialGradient(canvas.width/2,120,40,canvas.width/2,canvas.height/2,canvas.width);
+  grad.addColorStop(0,"#ffffff");
+  grad.addColorStop(1,"#e5e7eb");
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle="#111827";
+  ctx.font="bold 20px Malgun Gothic";
+  ctx.textAlign="center";
+  ctx.fillText(currentProteinName,canvas.width/2,34);
+
+  const projected=points.map((p,i)=>({...project(p),i}));
+
+  ctx.lineWidth=5;
+  for(let i=0;i<projected.length-1;i++){
+    const a=projected[i], b=projected[i+1];
+    ctx.strokeStyle="rgba(15,23,42,.38)";
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y);
+    ctx.lineTo(b.x,b.y);
+    ctx.stroke();
+  }
+
+  projected.sort((a,b)=>a.z-b.z).forEach(p=>{
+    const aa=residues[p.i];
+    const r=9+p.scale*8;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx.fillStyle=colors[aa.type];
+    ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.9)";
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    if(p.i%6===0 || p.i===0 || p.i===residues.length-1){
+      ctx.fillStyle="#111827";
+      ctx.font="bold 11px Malgun Gothic";
+      ctx.fillText(aa.one,p.x,p.y+4);
+    }
+  });
+
+  drawLegend();
+
+  if(rotating) angle+=0.01;
+  requestAnimationFrame(drawProtein);
+}
+
+function drawLegend(){
+  const items=[
+    ["소수성",colors.hydro],
+    ["친수성",colors.polar],
+    ["산성",colors.acidic],
+    ["염기성",colors.basic],
+    ["특수",colors.special]
+  ];
+  ctx.textAlign="left";
+  ctx.font="12px Malgun Gothic";
+  let x=20,y=canvas.height-24;
+  items.forEach(item=>{
+    ctx.fillStyle=item[1];
+    ctx.beginPath();
+    ctx.arc(x,y-4,6,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle="#111827";
+    ctx.fillText(item[0],x+10,y);
+    x+=78;
+  });
+}
+
+function mrnaSeq(){
+  return residues.map(r=>r.codon).join(" ");
+}
+
+function dnaTemplateSeq(){
+  const comp={A:"T",U:"A",G:"C",C:"G"};
+  return residues.map(r=>r.codon.split("").map(b=>comp[b]).join("")).join(" ");
+}
+
+function updateInfo(p){
+  const counts={hydro:0,polar:0,acidic:0,basic:0,special:0};
+  residues.forEach(r=>counts[r.type]++);
+
+  document.getElementById("resultText").textContent=
+`${p.name}
+
+구조 특징:
+${p.structure}
+
+의학·생명과학 연결:
+${p.medical}
+
+아미노산 수 = ${residues.length}개
+
+참고:
+${p.note}`;
+
+  document.getElementById("summaryTable").innerHTML=`
+    <tr><td>소수성</td><td>${counts.hydro}</td></tr>
+    <tr><td>친수성</td><td>${counts.polar}</td></tr>
+    <tr><td>산성</td><td>${counts.acidic}</td></tr>
+    <tr><td>염기성</td><td>${counts.basic}</td></tr>
+    <tr><td>특수</td><td>${counts.special}</td></tr>
+  `;
+
+  document.getElementById("sequenceBox").innerHTML=residues.map(r=>
+    `<span class="aa ${r.type}" title="${r.name}">${r.one}</span>`
+  ).join("");
+
+  document.getElementById("mrnaBox").textContent=mrnaSeq();
+  document.getElementById("dnaBox").textContent=dnaTemplateSeq();
+}
+
+function toggleRotation(){
+  rotating=!rotating;
+}
+
+function copySequence(){
+  navigator.clipboard.writeText(residues.map(r=>r.one).join(""));
+  alert("아미노산 서열을 복사했습니다.");
+}
+
+function downloadImage(){
+  const a=document.createElement("a");
+  a.href=canvas.toDataURL("image/png");
+  a.download="protein_structure.png";
+  a.click();
+}
+
+changeMode();
+loadKnownProtein();
+drawProtein();
+</script>
+
+</body>
+</html>

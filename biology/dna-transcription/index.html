@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA 전사 시뮬레이터</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background: #eef3f8;
+  color: #222;
+}
+
+header {
+  background: #1f2937;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.home{
+  display:inline-block;
+  color:white;
+  text-decoration:none;
+  font-size:13px;
+  margin-top:6px;
+  opacity:.85;
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 8px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #444;
+}
+
+input, select, button {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+button {
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.secondary { background:#4b5563; }
+button.warn { background:#dc2626; }
+
+.canvas-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+canvas {
+  width: 100%;
+  height: 370px;
+  display: block;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 5px;
+  text-align: center;
+}
+
+th { background: #f3f4f6; }
+
+.info {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.badge {
+  display:inline-block;
+  padding:2px 6px;
+  border-radius:6px;
+  background:#dbeafe;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:700;
+  margin-right:4px;
+}
+
+.seq {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  word-break: break-all;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:8px;
+  line-height:1.6;
+}
+
+.small {
+  font-size: 12px;
+  color:#555;
+  line-height:1.5;
+}
+
+@media (max-width: 600px) {
+  .grid, .grid3 { grid-template-columns: 1fr; }
+  canvas { height: 330px; }
+  input, button, select { font-size: 13px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  🧬 DNA 전사 시뮬레이터<br>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>아미노산 개수</label>
+        <input id="aaCount" type="number" min="1" max="20" value="6">
+      </div>
+
+      <div>
+        <label>주형 가닥 선택</label>
+        <select id="template">
+          <option value="x1">X1 가닥</option>
+          <option value="x2">X2 가닥</option>
+        </select>
+      </div>
+
+      <div>
+        <label>아미노산 지정 방식</label>
+        <select id="mode">
+          <option value="random20">20종 중 랜덤</option>
+          <option value="fixedOne">한 종류만 지정</option>
+          <option value="custom">직접 입력</option>
+        </select>
+      </div>
+
+      <div>
+        <label>한 종류만 지정</label>
+        <select id="fixedAA"></select>
+      </div>
+    </div>
+
+    <div id="customBox" style="margin-top:8px; display:none;">
+      <label>직접 입력: 아미노산 1문자 기호 또는 이름을 쉼표로 입력</label>
+      <input id="customAA" value="Met, Ala, Gly, Lys, Val, Phe">
+      <div class="small">
+        예: M,A,G,K,V,F 또는 Met,Ala,Gly,Lys,Val,Phe
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:8px;">
+      <button onclick="generateNew()">새 염기서열 만들기</button>
+      <button class="secondary" onclick="shuffleCodonOnly()">같은 아미노산 유지 + 코돈만 섞기</button>
+      <button class="secondary" onclick="shuffleOrderOnly()">아미노산 순서만 섞기</button>
+    </div>
+
+    <div class="small" style="margin-top:8px;">
+      이제 염기서열은 아무렇게나 섞이지 않습니다. 먼저 실제 20종 아미노산 중 하나를 정하고, 그 아미노산에 대응하는 실제 코돈만 사용해서 mRNA를 만든 뒤 DNA 가닥을 계산합니다. 정지 코돈은 제외했습니다.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="info" id="summary"></div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>A</th>
+          <th>G</th>
+          <th>C</th>
+          <th>T / U</th>
+          <th>총 염기 수</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="small" style="font-weight:700; margin-bottom:5px;">아미노산 배열</div>
+    <div class="seq" id="aaSeq"></div>
+  </div>
+
+  <div class="card">
+    <div class="small" style="font-weight:700; margin-bottom:5px;">염기서열</div>
+    <div class="seq" id="baseSeq"></div>
+  </div>
+
+  <div class="card">
+    <div class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const compDNA = {
+  A: "T",
+  T: "A",
+  G: "C",
+  C: "G"
+};
+
+const compRNAFromTemplateDNA = {
+  A: "U",
+  T: "A",
+  G: "C",
+  C: "G"
+};
+
+const dnaCodingFromRNA = {
+  A: "A",
+  U: "T",
+  G: "G",
+  C: "C"
+};
+
+const dnaTemplateFromRNA = {
+  A: "T",
+  U: "A",
+  G: "C",
+  C: "G"
+};
+
+// 표준 유전 암호. 정지 코돈은 제외.
+const aminoAcids = [
+  { one:"F", name:"Phe", ko:"페닐알라닌", codons:["UUU","UUC"] },
+  { one:"L", name:"Leu", ko:"류신", codons:["UUA","UUG","CUU","CUC","CUA","CUG"] },
+  { one:"I", name:"Ile", ko:"아이소류신", codons:["AUU","AUC","AUA"] },
+  { one:"M", name:"Met", ko:"메싸이오닌", codons:["AUG"] },
+  { one:"V", name:"Val", ko:"발린", codons:["GUU","GUC","GUA","GUG"] },
+  { one:"S", name:"Ser", ko:"세린", codons:["UCU","UCC","UCA","UCG","AGU","AGC"] },
+  { one:"P", name:"Pro", ko:"프롤린", codons:["CCU","CCC","CCA","CCG"] },
+  { one:"T", name:"Thr", ko:"트레오닌", codons:["ACU","ACC","ACA","ACG"] },
+  { one:"A", name:"Ala", ko:"알라닌", codons:["GCU","GCC","GCA","GCG"] },
+  { one:"Y", name:"Tyr", ko:"타이로신", codons:["UAU","UAC"] },
+  { one:"H", name:"His", ko:"히스티딘", codons:["CAU","CAC"] },
+  { one:"Q", name:"Gln", ko:"글루타민", codons:["CAA","CAG"] },
+  { one:"N", name:"Asn", ko:"아스파라진", codons:["AAU","AAC"] },
+  { one:"K", name:"Lys", ko:"라이신", codons:["AAA","AAG"] },
+  { one:"D", name:"Asp", ko:"아스파트산", codons:["GAU","GAC"] },
+  { one:"E", name:"Glu", ko:"글루탐산", codons:["GAA","GAG"] },
+  { one:"C", name:"Cys", ko:"시스테인", codons:["UGU","UGC"] },
+  { one:"W", name:"Trp", ko:"트립토판", codons:["UGG"] },
+  { one:"R", name:"Arg", ko:"아르지닌", codons:["CGU","CGC","CGA","CGG","AGA","AGG"] },
+  { one:"G", name:"Gly", ko:"글라이신", codons:["GGU","GGC","GGA","GGG"] }
+];
+
+let currentAA = [];
+let currentCodons = [];
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffleArray(arr) {
+  const copied = [...arr];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
+}
+
+function findAA(token) {
+  const t = String(token).trim().toLowerCase();
+  return aminoAcids.find(aa =>
+    aa.one.toLowerCase() === t ||
+    aa.name.toLowerCase() === t ||
+    aa.ko.toLowerCase() === t
+  );
+}
+
+function initAASelect() {
+  const sel = document.getElementById("fixedAA");
+  sel.innerHTML = aminoAcids.map(aa =>
+    `<option value="${aa.one}">${aa.name}(${aa.one}) - ${aa.ko}</option>`
+  ).join("");
+}
+
+function makeAAList() {
+  const count = Number(document.getElementById("aaCount").value);
+  const mode = document.getElementById("mode").value;
+
+  if (mode === "fixedOne") {
+    const selected = findAA(document.getElementById("fixedAA").value);
+    return Array(count).fill(selected);
+  }
+
+  if (mode === "custom") {
+    const raw = document.getElementById("customAA").value;
+    const tokens = raw.split(",").map(x => x.trim()).filter(Boolean);
+    const list = tokens.map(findAA);
+
+    if (list.some(x => !x)) {
+      alert("직접 입력한 아미노산 중 인식되지 않는 값이 있습니다. 예: M,A,G 또는 Met,Ala,Gly");
+      return null;
+    }
+
+    if (list.length === 0) {
+      alert("아미노산을 1개 이상 입력하세요.");
+      return null;
+    }
+
+    return list;
+  }
+
+  return Array.from({length: count}, () => pick(aminoAcids));
+}
+
+function codonsFromAAList(aaList) {
+  return aaList.map(aa => pick(aa.codons));
+}
+
+function buildFromCodons(aaList, codons) {
+  const template = document.getElementById("template").value;
+
+  const rna = codons.join("").split("");
+
+  // mRNA와 같은 방향의 비주형 가닥 = coding strand. RNA의 U만 T로 바뀜.
+  const codingDNA = rna.map(b => dnaCodingFromRNA[b]);
+
+  // mRNA를 만들 때 읽힌 주형 가닥
+  const templateDNA = rna.map(b => dnaTemplateFromRNA[b]);
+
+  const x1 = template === "x1" ? templateDNA : codingDNA;
+  const x2 = x1.map(b => compDNA[b]);
+
+  drawAll(x1, x2, rna, template, aaList, codons);
+}
+
+function generateNew() {
+  const aaList = makeAAList();
+  if (!aaList) return;
+
+  currentAA = aaList;
+  currentCodons = codonsFromAAList(currentAA);
+  buildFromCodons(currentAA, currentCodons);
+}
+
+function shuffleCodonOnly() {
+  if (currentAA.length === 0) generateNew();
+
+  currentCodons = codonsFromAAList(currentAA);
+  buildFromCodons(currentAA, currentCodons);
+}
+
+function shuffleOrderOnly() {
+  if (currentAA.length === 0) generateNew();
+
+  currentAA = shuffleArray(currentAA);
+  currentCodons = codonsFromAAList(currentAA);
+  buildFromCodons(currentAA, currentCodons);
+}
+
+function countBases(seq, bases) {
+  const result = {};
+  bases.forEach(b => result[b] = 0);
+  seq.forEach(x => result[x]++);
+  return result;
+}
+
+function grouped(seq, size=3) {
+  let out = [];
+  for (let i = 0; i < seq.length; i += size) {
+    out.push(seq.slice(i, i + size).join(""));
+  }
+  return out.join(" ");
+}
+
+function drawAll(x1, x2, rna, template, aaList, codons) {
+  const x1Count = countBases(x1, ["A","G","C","T"]);
+  const x2Count = countBases(x2, ["A","G","C","T"]);
+  const rnaCount = countBases(rna, ["A","G","C","U"]);
+
+  const aaText = aaList.map((aa, i) => `${i+1}. ${aa.name}(${aa.one}, ${aa.ko}) - ${codons[i]}`).join(" / ");
+
+  document.getElementById("summary").innerHTML =
+    `<span class="badge">주형 가닥: ${template.toUpperCase()}</span>` +
+    `<span class="badge">아미노산 ${aaList.length}개</span>` +
+    `<span class="badge">염기 ${rna.length}개</span>\n` +
+    `아미노산 20종 중 하나를 먼저 지정하고, 그 아미노산에 해당하는 실제 mRNA 코돈만 사용합니다.\n` +
+    `mRNA 코돈 → 비주형 DNA는 U만 T로 바뀐 배열이고, 주형 DNA는 mRNA와 상보적인 배열입니다.`;
+
+  document.getElementById("tableBody").innerHTML = `
+    <tr>
+      <td>X1 DNA</td>
+      <td>${x1Count.A}</td>
+      <td>${x1Count.G}</td>
+      <td>${x1Count.C}</td>
+      <td>${x1Count.T}</td>
+      <td>${x1.length}</td>
+    </tr>
+    <tr>
+      <td>X2 DNA</td>
+      <td>${x2Count.A}</td>
+      <td>${x2Count.G}</td>
+      <td>${x2Count.C}</td>
+      <td>${x2Count.T}</td>
+      <td>${x2.length}</td>
+    </tr>
+    <tr>
+      <td>mRNA</td>
+      <td>${rnaCount.A}</td>
+      <td>${rnaCount.G}</td>
+      <td>${rnaCount.C}</td>
+      <td>${rnaCount.U}</td>
+      <td>${rna.length}</td>
+    </tr>
+  `;
+
+  document.getElementById("aaSeq").textContent = aaText;
+  document.getElementById("baseSeq").textContent =
+    `mRNA  : ${grouped(rna)}\n` +
+    `X1 DNA: ${grouped(x1)}\n` +
+    `X2 DNA: ${grouped(x2)}`;
+
+  draw(x1, x2, rna, template, aaList);
+}
+
+function draw(x1, x2, rna, template, aaList) {
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = Math.max(1000, 160 + x1.length * 34);
+  canvas.height = 370;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.font = "bold 16px Arial";
+  ctx.fillStyle = "#111827";
+  ctx.fillText("X1 DNA", 30, 65);
+  ctx.fillText("X2 DNA", 30, 145);
+  ctx.fillText("mRNA", 30, 245);
+  ctx.fillText("아미노산", 30, 315);
+
+  const startX = 120;
+  const gap = 32;
+
+  for (let i = 0; i < x1.length; i++) {
+    const x = startX + i * gap;
+
+    drawBase(ctx, x, 45, x1[i], template === "x1");
+    drawBase(ctx, x, 125, x2[i], template === "x2");
+
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 14, 78);
+    ctx.lineTo(x + 14, 125);
+    ctx.stroke();
+
+    drawBase(ctx, x, 225, rna[i], false, true);
+  }
+
+  for (let i = 0; i < aaList.length; i++) {
+    const x = startX + i * gap * 3;
+    const w = gap * 3 - 4;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#475569";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, x, 292, w, 28, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#111827";
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(aaList[i].one, x + w/2, 306);
+  }
+
+  ctx.fillStyle = "#475569";
+  ctx.font = "13px Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("※ 노란색으로 표시된 DNA 가닥이 주형 가닥입니다. mRNA는 실제 아미노산 코돈으로만 구성됩니다.", 30, 355);
+}
+
+function drawBase(ctx, x, y, base, isTemplate=false, isRNA=false) {
+  let color = {
+    A: "#ef4444",
+    G: "#22c55e",
+    C: "#3b82f6",
+    T: "#f97316",
+    U: "#a855f7"
+  }[base];
+
+  ctx.fillStyle = isTemplate ? "#fde68a" : "#ffffff";
+  ctx.strokeStyle = isRNA ? "#7c3aed" : "#334155";
+  ctx.lineWidth = 2;
+
+  roundRect(ctx, x, y, 30, 30, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  ctx.font = "bold 16px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(base, x + 15, y + 15);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+document.getElementById("mode").addEventListener("change", () => {
+  document.getElementById("customBox").style.display =
+    document.getElementById("mode").value === "custom" ? "block" : "none";
+});
+
+document.getElementById("template").addEventListener("change", () => {
+  if (currentAA.length === 0 || currentCodons.length === 0) generateNew();
+  else buildFromCodons(currentAA, currentCodons);
+});
+
+document.getElementById("fixedAA").addEventListener("change", generateNew);
+
+initAASelect();
+generateNew();
+</script>
+
+</body>
+</html>

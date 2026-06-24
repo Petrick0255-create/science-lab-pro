@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>원형 그래프 디자이너</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",Arial,sans-serif;
+  background:#eef3f8;
+  color:#111;
+}
+
+header{
+  background:#1f2937;
+  color:white;
+  text-align:center;
+  padding:16px;
+}
+
+.title{
+  font-size:22px;
+  font-weight:900;
+}
+
+.subtitle{
+  font-size:13px;
+  opacity:.85;
+  margin-top:4px;
+}
+
+.home{
+  display:inline-block;
+  margin-top:8px;
+  color:white;
+  text-decoration:none;
+  font-size:13px;
+  opacity:.9;
+}
+
+.container{
+  max-width:1180px;
+  margin:0 auto;
+  padding:14px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:390px 1fr;
+  gap:14px;
+}
+
+.card{
+  background:white;
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+h2{
+  margin:0 0 12px;
+  font-size:18px;
+}
+
+label{
+  font-size:13px;
+  font-weight:800;
+  margin-top:8px;
+  display:block;
+}
+
+input,select,button{
+  width:100%;
+  min-height:36px;
+  border:1px solid #cfd4dc;
+  border-radius:8px;
+  padding:6px;
+  font-size:14px;
+}
+
+button{
+  border:none;
+  background:#2563eb;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+button.gray{background:#4b5563}
+button.dark{background:#111827}
+
+.input-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.row-head,
+.row{
+  display:grid;
+  grid-template-columns:42px 1fr 1fr;
+  gap:6px;
+  align-items:center;
+}
+
+.row-head{
+  font-size:12px;
+  font-weight:900;
+  color:#555;
+  margin-bottom:4px;
+}
+
+.row{
+  margin-bottom:6px;
+}
+
+.row span{
+  font-weight:800;
+  text-align:center;
+}
+
+.preview-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:560px;
+}
+
+canvas{
+  background:white;
+}
+
+.small{
+  font-size:12px;
+  color:#555;
+  line-height:1.5;
+  margin-top:8px;
+}
+
+hr{
+  border:none;
+  border-top:1px solid #e5e7eb;
+  margin:14px 0;
+}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="title">원형 그래프 디자이너</div>
+  <div class="subtitle">평가원 스타일 비율 원그래프 제작 도구</div>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<main class="container">
+
+  <section class="layout">
+
+    <aside class="card">
+
+      <h2>① 원그래프 설정</h2>
+
+      <label>조각 수</label>
+      <select id="sliceCount">
+        <option value="2">2조각</option>
+        <option value="3">3조각</option>
+        <option value="4" selected>4조각</option>
+        <option value="5">5조각</option>
+        <option value="6">6조각</option>
+        <option value="8">8조각</option>
+      </select>
+
+      <label>조각 안 표시</label>
+      <select id="textMode">
+        <option value="fraction" selected>계산된 분수</option>
+        <option value="value">입력한 값</option>
+        <option value="custom">직접 입력 문자</option>
+        <option value="none">표시 안 함</option>
+      </select>
+
+      <div class="input-grid">
+        <div>
+          <label>원 크기</label>
+          <input id="circleSize" type="number" value="360" min="120" max="600">
+        </div>
+        <div>
+          <label>선 굵기</label>
+          <input id="lineWidth" type="number" value="2" min="1" max="8" step="0.5">
+        </div>
+        <div>
+          <label>글자 크기</label>
+          <input id="fontSize" type="number" value="68" min="12" max="80">
+        </div>
+        <div>
+          <label>회전 각도</label>
+          <input id="rotation" type="number" value="-90" step="5">
+        </div>
+      </div>
+
+      <hr>
+
+      <h2>② 조각별 비율</h2>
+
+      <div class="row-head">
+        <span></span>
+        <span>비율값</span>
+        <span>직접 문자</span>
+      </div>
+
+      <div id="sliceRows"></div>
+
+      <button onclick="draw()">미리보기</button>
+      <button class="dark" onclick="savePNG()">PNG 저장</button>
+      <button class="gray" onclick="resetDefault()">기본값</button>
+
+      <div class="small">
+        예: 1, 1, 1, 1 → 각각 1/4<br>
+        예: 2, 1, 1 → 1/2, 1/4, 1/4<br>
+        예: 3, 2, 1 → 1/2, 1/3, 1/6
+      </div>
+
+    </aside>
+
+    <section class="card">
+      <h2>③ 미리보기</h2>
+      <div class="preview-wrap">
+        <canvas id="canvas" width="700" height="620"></canvas>
+      </div>
+    </section>
+
+  </section>
+
+</main>
+
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+function v(id){return document.getElementById(id).value}
+function n(id){return Number(document.getElementById(id).value)}
+
+function gcd(a,b){
+  a=Math.abs(a);
+  b=Math.abs(b);
+  while(b){
+    const t=b;
+    b=a%b;
+    a=t;
+  }
+  return a || 1;
+}
+
+function toFraction(value,total){
+  const scale=1000000;
+  let num=Math.round(value*scale);
+  let den=Math.round(total*scale);
+
+  const g=gcd(num,den);
+  num/=g;
+  den/=g;
+
+  return {num,den};
+}
+
+function makeRows(){
+  const count=n("sliceCount");
+  const box=document.getElementById("sliceRows");
+  box.innerHTML="";
+
+  for(let i=0;i<count;i++){
+    const row=document.createElement("div");
+    row.className="row";
+
+    const defaultValue = 1;
+
+    row.innerHTML=`
+      <span>${i+1}</span>
+      <input id="value${i}" type="number" value="${defaultValue}" step="0.5" min="0">
+      <input id="label${i}" value="${i+1}">
+    `;
+
+    box.appendChild(row);
+  }
+
+  bindInputs();
+}
+
+function getValues(){
+  const count=n("sliceCount");
+  const arr=[];
+
+  for(let i=0;i<count;i++){
+    const value=Number(document.getElementById(`value${i}`).value);
+    arr.push(isNaN(value) || value<0 ? 0 : value);
+  }
+
+  return arr;
+}
+
+function drawFractionText(ctx,x,y,num,den,fontSize){
+
+  ctx.save();
+
+  ctx.fillStyle="#111";
+  ctx.strokeStyle="#111";
+
+  const numSize = fontSize*0.9;
+  const denSize = fontSize*0.9;
+
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+
+  ctx.font=`${numSize}px Cambria`;
+
+  const numW =
+    ctx.measureText(String(num)).width;
+
+  const denW =
+    ctx.measureText(String(den)).width;
+
+  const fracW =
+    Math.max(numW,denW)+12;
+
+  const gap = fontSize*0.15;
+
+  ctx.fillText(
+    num,
+    x,
+    y-fontSize*0.45
+  );
+
+  ctx.lineWidth=1.7;
+
+  ctx.beginPath();
+  ctx.moveTo(
+    x-fracW/2,
+    y-gap
+  );
+  ctx.lineTo(
+    x+fracW/2,
+    y-gap
+  );
+  ctx.stroke();
+
+  ctx.fillText(
+    den,
+    x,
+    y+fontSize*0.45
+  );
+
+  ctx.restore();
+}
+
+function drawText(ctx,text,x,y,fontSize){
+  ctx.save();
+  ctx.fillStyle="#111";
+  ctx.font=`${fontSize}px Cambria`;
+  ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillText(text,x,y);
+  ctx.restore();
+}
+
+function draw(){
+  const values=getValues();
+  const total=values.reduce((a,b)=>a+b,0);
+
+  const size=n("circleSize");
+  const lw=n("lineWidth");
+  const fontSize=n("fontSize");
+  const mode=v("textMode");
+  const rot=n("rotation")*Math.PI/180;
+
+  const cx=canvas.width/2;
+  const cy=canvas.height/2;
+  const r=size/2;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="white";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  if(total<=0) return;
+
+  ctx.save();
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=lw;
+
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.stroke();
+
+  let angle=rot;
+
+  for(let i=0;i<values.length;i++){
+    const ratio=values[i]/total;
+    const next=angle+Math.PI*2*ratio;
+
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(
+      cx+Math.cos(angle)*r,
+      cy+Math.sin(angle)*r
+    );
+    ctx.stroke();
+
+    angle=next;
+  }
+
+  ctx.restore();
+
+  angle=rot;
+
+  for(let i=0;i<values.length;i++){
+    const ratio=values[i]/total;
+    const next=angle+Math.PI*2*ratio;
+    const mid=(angle+next)/2;
+
+    const tx=cx+Math.cos(mid)*r*0.58;
+    const ty=cy+Math.sin(mid)*r*0.58;
+
+    if(mode==="fraction"){
+      const f=toFraction(values[i],total);
+      drawFractionText(ctx,tx,ty,f.num,f.den,fontSize);
+    }
+
+    if(mode==="value"){
+      drawText(ctx,values[i],tx,ty,fontSize);
+    }
+
+    if(mode==="custom"){
+      drawText(ctx,v(`label${i}`),tx,ty,fontSize);
+    }
+
+    angle=next;
+  }
+}
+
+function savePNG(){
+  draw();
+  const link=document.createElement("a");
+  link.download="circle_graph.png";
+  link.href=canvas.toDataURL("image/png");
+  link.click();
+}
+
+function resetDefault(){
+  document.getElementById("sliceCount").value="4";
+  document.getElementById("textMode").value="fraction";
+  document.getElementById("circleSize").value="360";
+  document.getElementById("lineWidth").value="2";
+  document.getElementById("fontSize").value="34";
+  document.getElementById("rotation").value="-90";
+  makeRows();
+  draw();
+}
+
+function bindInputs(){
+  document.querySelectorAll("input,select").forEach(el=>{
+    el.oninput=draw;
+    el.onchange=draw;
+  });
+}
+
+document.getElementById("sliceCount").addEventListener("change",()=>{
+  makeRows();
+  draw();
+});
+
+window.onload=()=>{
+  makeRows();
+  draw();
+};
+</script>
+
+</body>
+</html>

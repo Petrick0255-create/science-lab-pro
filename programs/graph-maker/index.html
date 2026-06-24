@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수능 물리 그래프 생성기</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#eef3f8;color:#111}
+header{background:#1f2937;color:#fff;text-align:center;padding:12px;font-weight:800;font-size:17px}
+.home{display:inline-block;margin-top:6px;color:white;font-size:13px;text-decoration:none;opacity:.85}
+.container{max-width:1280px;margin:0 auto;padding:10px}
+.card{background:white;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:420px 1fr;gap:10px}
+label{font-size:12px;font-weight:800;color:#333}
+input,select,textarea,button{width:100%;min-height:34px;padding:6px;font-size:14px;border-radius:8px;border:1px solid #cfd4dc}
+textarea{height:70px;resize:vertical}
+button{border:none;background:#2563eb;color:white;font-weight:800;cursor:pointer}
+input[type="checkbox"]{width:auto;min-height:auto;transform:scale(1.25);margin-right:6px}
+button.secondary{background:#4b5563}
+button.dark{background:#111827}
+button.warn{background:#dc2626}
+.canvas-wrap{overflow:auto;background:#f8fafc;border-radius:12px;padding:8px}
+canvas{display:block;margin:0 auto;background:white;border:1px solid #ddd;max-width:100%;height:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{border:1px solid #ddd;padding:5px;text-align:center}
+th{background:#f3f4f6}
+td{background:#fff}
+tr.selected td{background:#dbeafe}
+.small{font-size:12px;color:#555;line-height:1.5}
+.section-title{font-weight:900;margin:4px 0 8px}
+.hidden{display:none}
+@media(max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  ⚛️ 수능 물리 그래프 생성기<br>
+  <a class="home" href="../../index.html">← J&B LAB 홈으로</a>
+</header>
+
+<div class="container">
+
+  <div class="card grid">
+    <div>
+      <label>그래프 종류</label>
+      <select id="graphType">
+        <option>봉우리 곡선 그래프</option>
+        <option>구간 그래프</option>
+        <option>점 그래프</option>
+      </select>
+    </div>
+
+    <div>
+      <label>x축 제목</label>
+      <input id="xLabel" value="시간">
+    </div>
+
+    <div>
+      <label>x범위 최소</label>
+      <input id="xMin" value="0">
+    </div>
+
+    <div>
+      <label>x범위 최대</label>
+      <input id="xMax" value="5">
+    </div>
+
+    <div>
+      <label>y축 제목</label>
+      <textarea id="yLabel">힘
+의
+
+크
+기</textarea>
+    </div>
+
+    <div>
+      <label>y범위 최소</label>
+      <input id="yMin" value="0">
+    </div>
+
+    <div>
+      <label>y범위 최대</label>
+      <input id="yMax" value="3">
+    </div>
+
+    <div>
+      <label>x눈금</label>
+      <input id="xTicks" value="0">
+    </div>
+
+    <div>
+      <label>y눈금</label>
+      <input id="yTicks" value="0">
+    </div>
+
+    <div>
+      <label>그래프 굵기</label>
+      <input id="graphWidth" value="5">
+    </div>
+
+    <div>
+      <label>축 굵기</label>
+      <input id="axisWidth" value="4">
+    </div>
+
+    <div>
+      <label>점선 굵기</label>
+      <input id="guideWidth" value="3">
+    </div>
+
+    <div>
+      <label>점 크기</label>
+      <input id="pointSize" value="7.5">
+    </div>
+
+    <div>
+      <label>X축 1단위 길이(px)</label>
+      <input id="xUnitPx" value="70">
+    </div>
+
+    <div>
+      <label>Y축 1단위 길이(px)</label>
+      <input id="yUnitPx" value="70">
+    </div>
+
+    <div>
+      <label>XY 동일 비율</label>
+      <div style="min-height:34px;display:flex;align-items:center;font-size:14px;font-weight:800">
+        <input id="sameXYScale" type="checkbox" checked> 켜기
+      </div>
+    </div>
+
+    <div>
+      <label>미리보기 맞춤</label>
+      <div style="min-height:34px;display:flex;align-items:center;font-size:14px;font-weight:800">
+        <input id="fitPreview" type="checkbox" checked> 전체 보이기
+      </div>
+    </div>
+
+    <div>
+      <label>축 제목 글자 크기</label>
+      <input id="axisLabelFontSize" value="35">
+    </div>
+
+    <div>
+      <label>눈금 숫자 글자 크기</label>
+      <input id="tickFontSize" value="35">
+    </div>
+
+    <div>
+      <label>점 이름 글자 크기</label>
+      <input id="pointLabelFontSize" value="35">
+    </div>
+
+    <div>
+      <label>그래프 이름 글자 크기</label>
+      <input id="graphLabelFontSize" value="35">
+    </div>
+  </div>
+
+  <div class="grid2">
+
+    <div>
+
+      <div class="card" id="peakBox">
+        <div class="section-title">봉우리 곡선 설정</div>
+
+        <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+          <div>
+            <label>이름</label>
+            <input id="peakName" value="A">
+          </div>
+
+          <div>
+            <label>최댓값</label>
+            <input id="peakHeight" value="2.4">
+          </div>
+
+          <div>
+            <label>내부 면적</label>
+            <input id="peakArea">
+          </div>
+
+          <div>
+            <label>모양</label>
+            <select id="peakShape">
+              <option selected>좁게</option>
+              <option>보통</option>
+              <option>넓게</option>
+            </select>
+          </div>
+
+          <div>
+            <label>선</label>
+            <select id="peakLine">
+              <option>실선</option>
+              <option>점선</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="small" style="margin-top:8px">
+          그래프 영역에서 드래그하면 시작 x~끝 x가 자동으로 추가됩니다.
+        </div>
+      </div>
+
+      <div class="card hidden" id="pointBox">
+      
+        <div class="section-title">점 그래프 설정</div>
+      
+        <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+      
+          <div>
+            <label>점 이름</label>
+            <input id="pointName" value="A">
+          </div>
+      
+          <div>
+            <label>색상</label>
+            <select id="pointColor">
+              <option>검정</option>
+              <option>파랑</option>
+            </select>
+          </div>
+      
+          <div>
+            <label>X</label>
+            <input id="pointX" value="1">
+          </div>
+      
+          <div>
+            <label>Y</label>
+            <input id="pointY" value="1">
+          </div>
+      
+        </div>
+      
+        <button style="margin-top:8px" onclick="addPoint()">
+          점 추가
+        </button>
+
+      </div>
+
+      <div class="card hidden" id="segmentBox">
+        <div class="section-title">구간 그래프 설정</div>
+
+        <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+          <div>
+            <label>종류</label>
+            <select id="segmentType">
+              <option>수평</option>
+              <option>완만 변화</option>
+              <option>직선</option>
+              <option>꺾은선</option>
+              <option>감소곡선</option>
+              <option>증가곡선</option>
+              <option>이차함수 위로볼록</option>
+              <option>이차함수 아래로볼록</option>
+              <option>로그함수 위로볼록</option>
+              <option>로그함수 아래로볼록</option>
+            </select>
+          </div>
+
+          <div>
+            <label>선</label>
+            <select id="segmentLine">
+              <option>실선</option>
+              <option>점선</option>
+            </select>
+          </div>
+
+          <div>
+            <label>시작 x</label>
+            <input id="segStart" value="0">
+          </div>
+
+          <div>
+            <label>끝 x</label>
+            <input id="segEnd" value="2">
+          </div>
+
+          <div>
+            <label>시작 y</label>
+            <input id="segY1" value="12">
+          </div>
+
+          <div id="segY2Wrap">
+            <label>끝 y</label>
+            <input id="segY2" value="21">
+          </div>
+
+          <div id="segMidXWrap">
+            <label>중간 x</label>
+            <input id="segMidX">
+          </div>
+
+          <div id="segMidYWrap">
+            <label>중간 y</label>
+            <input id="segMidY">
+          </div>
+
+          <div id="segShapeWrap">
+            <label>모양</label>
+            <select id="segmentShape">
+              <option selected>좁게</option>
+              <option>보통</option>
+              <option>넓게</option>
+            </select>
+          </div>
+        </div>
+
+        <button style="margin-top:8px" onclick="addSegment()">구간 추가</button>
+      </div>
+
+      <div class="card grid" style="grid-template-columns:repeat(2,1fr)">
+        <button onclick="draw()">미리보기</button>
+        <button class="dark" onclick="savePNG()">PNG 저장</button>
+        <button class="secondary" onclick="deleteSelected()">선택 행 삭제</button>
+        <button class="secondary" onclick="deleteLast()">마지막 행 삭제</button>
+        <button class="warn" onclick="clearRows()">전체 초기화</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title">데이터 목록</div>
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>종류/이름</th><th>x1</th><th>x2/y1</th><th>y1/x2</th>
+              <th>y2/면적</th><th>그래프</th><th>모양</th><th>선</th><th>비고</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <div class="card canvas-wrap">
+      <canvas id="canvas" width="900" height="620"></canvas>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let rows = [];
+let selectedRow = null;
+let dragStart = null;
+
+let plot = { left:180, right:170, top:120, bottom:150 };
+
+function v(id){ return document.getElementById(id).value; }
+function n(id){ return Number(document.getElementById(id).value); }
+
+function parseTicks(text){
+  if(!text.trim()) return [];
+  return text.split(",").map(x=>Number(x.trim())).filter(x=>!isNaN(x));
+}
+
+function getScale(){
+  const xScale=Math.max(10, Number(v("xUnitPx")) || 70);
+  let yScale=Math.max(10, Number(v("yUnitPx")) || 70);
+
+  if(document.getElementById("sameXYScale").checked){
+    yScale=xScale;
+    document.getElementById("yUnitPx").value=xScale;
+  }
+
+  return {xScale,yScale};
+}
+
+function updatePlotAndCanvas(){
+  const axisFont=Math.max(8, n("axisLabelFontSize") || 35);
+  const tickFont=Math.max(8, n("tickFontSize") || 35);
+  const pointFont=Math.max(8, n("pointLabelFontSize") || 35);
+  const graphFont=Math.max(8, n("graphLabelFontSize") || 35);
+
+  const yLines=v("yLabel").split("\n");
+  const maxYLabelLen=Math.max(1, ...yLines.map(t=>t.length));
+
+  plot.left=Math.max(170, 85 + maxYLabelLen*axisFont*0.95 + tickFont*2.6);
+  plot.right=Math.max(190, pointFont*4.2 + axisFont*3);
+  plot.top=Math.max(130, pointFont*2.4 + graphFont*1.5);
+  plot.bottom=Math.max(160, tickFont*2.8 + axisFont*2.2);
+
+  const xMin=n("xMin"), xMax=n("xMax");
+  const yMin=n("yMin"), yMax=n("yMax");
+  const {xScale,yScale}=getScale();
+
+  const plotW=Math.max(80, (xMax-xMin)*xScale);
+  const plotH=Math.max(80, (yMax-yMin)*yScale);
+
+  const newW=Math.ceil(plot.left + plotW + plot.right);
+  const newH=Math.ceil(plot.top + plotH + plot.bottom);
+
+  if(canvas.width!==newW) canvas.width=newW;
+  if(canvas.height!==newH) canvas.height=newH;
+
+  if(document.getElementById("fitPreview").checked){
+    canvas.style.maxWidth="100%";
+    canvas.style.width="100%";
+    canvas.style.height="auto";
+  }else{
+    canvas.style.width=canvas.width+"px";
+    canvas.style.height=canvas.height+"px";
+  }
+}
+
+function plotArea(){
+  return {
+    left: plot.left,
+    right: canvas.width-plot.right,
+    top: plot.top,
+    bottom: canvas.height-plot.bottom
+  };
+}
+
+function xMap(x){
+  const xMin=n("xMin");
+  const {xScale}=getScale();
+  return plot.left + (x-xMin)*xScale;
+}
+
+function yMap(y){
+  const yMin=n("yMin");
+  const {yScale}=getScale();
+  return canvas.height-plot.bottom - (y-yMin)*yScale;
+}
+
+function invX(px){
+  const xMin=n("xMin");
+  const {xScale}=getScale();
+  return xMin + (px-plot.left)/xScale;
+}
+
+function font(sizeId, family="Malgun Gothic"){
+  return `${n(sizeId)}px ${family}`;
+}
+
+function easeInOut(t){
+  return 3*t*t - 2*t*t*t;
+}
+
+function shapePower(shape){
+  if(shape==="좁게") return 3.2;
+  if(shape==="넓게") return 1.45;
+  return 2.15;
+}
+
+function shapeLogK(shape){
+  if(shape==="좁게") return 14;
+  if(shape==="넓게") return 2.4;
+  return 6;
+}
+
+function curveRatio(kind,t,shape){
+  const p=shapePower(shape);
+  const k=shapeLogK(shape);
+
+  if(kind==="이차함수 위로볼록"){
+    return 1-Math.pow(1-t,p);
+  }
+  if(kind==="이차함수 아래로볼록"){
+    return Math.pow(t,p);
+  }
+  if(kind==="로그함수 위로볼록"){
+    return Math.log(1+k*t)/Math.log(1+k);
+  }
+  if(kind==="로그함수 아래로볼록"){
+    return 1-Math.log(1+k*(1-t))/Math.log(1+k);
+  }
+
+  return easeInOut(t);
+}
+
+function setDash(line){
+  ctx.setLineDash(line==="점선" ? [8,6] : []);
+}
+
+function axisValues(){
+  const xMin=n("xMin"), xMax=n("xMax");
+  const yMin=n("yMin"), yMax=n("yMax");
+
+  // 0이 범위 안에 있으면 실제 0축으로 이동합니다.
+  // 0이 범위 밖에 있으면 그래프 영역의 왼쪽/아래쪽을 축처럼 씁니다.
+  return {
+    xAxis: (yMin < 0 && yMax > 0) ? 0 : yMin,
+    yAxis: (xMin < 0 && xMax > 0) ? 0 : xMin
+  };
+}
+
+function drawAxes(){
+  const axisWidth=n("axisWidth");
+  const xMin=n("xMin"), xMax=n("xMax");
+  const yMin=n("yMin"), yMax=n("yMax");
+  const {xAxis, yAxis}=axisValues();
+
+  const x0=xMap(yAxis);
+  const y0=yMap(xAxis);
+  const xLeft=xMap(xMin), xEnd=xMap(xMax);
+  const yBottom=yMap(yMin), yEnd=yMap(yMax);
+
+  ctx.save();
+  ctx.strokeStyle="#111";
+  ctx.fillStyle="#111";
+  ctx.lineWidth=axisWidth;
+  ctx.setLineDash([]);
+
+  // x축
+  ctx.beginPath();
+  ctx.moveTo(xLeft,y0);
+  ctx.lineTo(xEnd+25,y0);
+  ctx.stroke();
+
+  const aw = n("axisWidth");
+  
+  ctx.beginPath();
+  ctx.moveTo(xEnd + aw*8, y0);
+  ctx.lineTo(xEnd + aw*4, y0 - aw*2);
+  ctx.lineTo(xEnd + aw*4, y0 + aw*2);
+  ctx.closePath();
+  ctx.fill();
+  
+  // y축
+  ctx.beginPath();
+  ctx.moveTo(x0,yBottom);
+  ctx.lineTo(x0,yEnd-25);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x0, yEnd-aw*8);
+  
+  ctx.lineTo(
+    x0-aw*2,
+    yEnd-aw*4
+  );
+  
+  ctx.lineTo(
+    x0+aw*2,
+    yEnd-aw*4
+  );
+  
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.font=font("axisLabelFontSize");
+  ctx.textAlign="left";
+  ctx.textBaseline="top";
+  ctx.fillText(v("xLabel"), xEnd+30, y0+18);
+
+  ctx.textAlign="center";
+  ctx.textBaseline="bottom";
+  const yLines=v("yLabel").split("\n");
+  yLines.forEach((line,i)=>{
+    ctx.fillText(line, x0-82, yEnd-40+i*(n("axisLabelFontSize")+1));
+  });
+
+  let xTicks=parseTicks(v("xTicks"));
+  let yTicks=parseTicks(v("yTicks"));
+
+  // 원점 표시는 실제 0축이 둘 다 화면 안에 있을 때만 표시
+  if(xMin<=0 && xMax>=0 && yMin<=0 && yMax>=0){
+    xTicks=xTicks.filter(t=>t!==0);
+    yTicks=yTicks.filter(t=>t!==0);
+    ctx.font=font("tickFontSize");
+    ctx.textAlign="right";
+    ctx.textBaseline="top";
+    ctx.fillText("0", x0-8, y0+8);
+  }
+
+  ctx.font=font("tickFontSize");
+  ctx.textAlign="center";
+  ctx.textBaseline="top";
+
+  xTicks.forEach(t=>{
+    if(t<xMin || t>xMax) return;
+    const x=xMap(t);
+    ctx.beginPath();
+    ctx.moveTo(x,y0);
+    ctx.lineTo(x,y0+6);
+    ctx.stroke();
+    ctx.fillText(String(t),x,y0+10);
+  });
+
+  ctx.textAlign="right";
+  ctx.textBaseline="middle";
+
+  yTicks.forEach(t=>{
+    if(t<yMin || t>yMax) return;
+    const y=yMap(t);
+    ctx.beginPath();
+    ctx.moveTo(x0,y);
+    ctx.lineTo(x0-6,y);
+    ctx.stroke();
+    ctx.fillText(String(t),x0-10,y);
+  });
+
+  ctx.restore();
+}
+
+function drawGuideLines(points){
+  const used=new Set();
+  const xMin=n("xMin"), xMax=n("xMax");
+  const yMin=n("yMin"), yMax=n("yMax");
+  const {xAxis, yAxis}=axisValues();
+
+  ctx.save();
+  ctx.strokeStyle="#111";
+  ctx.lineWidth=n("guideWidth");
+  ctx.globalAlpha=.6;
+  ctx.setLineDash([2,5]);
+
+  points.forEach(([x,y])=>{
+    if(x<xMin || x>xMax || y<yMin || y>yMax) return;
+    const key=`${x.toFixed(6)},${y.toFixed(6)}`;
+    if(used.has(key)) return;
+    used.add(key);
+
+    // 보조 점선은 축과 그래프 점 사이에만 표시
+    ctx.beginPath();
+    ctx.moveTo(xMap(x),yMap(xAxis));
+    ctx.lineTo(xMap(x),yMap(y));
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(xMap(yAxis),yMap(y));
+    ctx.lineTo(xMap(x),yMap(y));
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function drawPeakGraph(){
+  rows.forEach(row=>{
+    const name=row[0];
+    let start=Number(row[1]);
+    let end=Number(row[2]);
+    let height=Number(row[3]);
+    const areaText=(row[4]||"").trim();
+    const shape=row[6]||"좁게";
+    const line=row[7]||"실선";
+
+    if(isNaN(start)||isNaN(end)||isNaN(height)||end<=start) return;
+
+    if(areaText){
+      const area=Number(areaText);
+      const width=end-start;
+      if(!isNaN(area)) height=area*3/(2*width);
+    }
+
+    const center=(start+end)/2;
+    const half=(end-start)/2;
+
+    ctx.save();
+    ctx.strokeStyle="#111";
+    ctx.lineWidth=n("graphWidth");
+    setDash(line);
+    ctx.beginPath();
+
+    for(let i=0;i<=500;i++){
+      const x=start+(end-start)*i/500;
+      const base=Math.max(1-Math.pow((x-center)/half,2),0);
+      let y=height*base;
+
+      if(shape==="좁게") y=height*Math.pow(base,2);
+      if(shape==="넓게") y=height*Math.sqrt(base);
+
+      if(i===0) ctx.moveTo(xMap(x),yMap(y));
+      else ctx.lineTo(xMap(x),yMap(y));
+    }
+
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font=font("graphLabelFontSize");
+    ctx.textAlign="center";
+    ctx.textBaseline="bottom";
+    ctx.fillText(name,xMap(center),yMap(height+height*.05));
+    ctx.restore();
+  });
+}
+
+function drawPointGraph(){
+
+  const guide=[];
+
+  rows.forEach(row=>{
+
+    if(row[0]!=="점") return;
+
+    const name=row[1];
+    const x=Number(row[2]);
+    const y=Number(row[3]);
+    const color=row[4];
+
+    guide.push([x,y]);
+
+    let stroke="#111";
+
+    if(color==="파랑")
+      stroke="#28a5e5";
+
+    ctx.save();
+
+    ctx.fillStyle=stroke;
+    ctx.strokeStyle=stroke;
+
+    ctx.beginPath();
+    ctx.arc(
+      xMap(x),
+      yMap(y),
+      n("pointSize"),
+      0,
+      Math.PI*2
+    );
+    ctx.fill();
+
+    ctx.font=font("pointLabelFontSize","Cambria");
+    ctx.textBaseline="middle";
+
+    const px=xMap(x);
+    const py=yMap(y);
+    const textW=ctx.measureText(name).width;
+    const gap=Math.max(10, n("pointSize")+6);
+
+    let tx=px+gap;
+    let ty=py-8;
+    ctx.textAlign="left";
+
+    if(tx+textW+18>canvas.width){
+      tx=px-gap;
+      ctx.textAlign="right";
+    }
+    if(ty-n("pointLabelFontSize")/2<8){
+      ty=py+n("pointLabelFontSize")*0.8;
+    }
+    if(ty+n("pointLabelFontSize")/2>canvas.height-8){
+      ty=py-n("pointLabelFontSize")*0.8;
+    }
+
+    ctx.fillText(name,tx,ty);
+
+    ctx.restore();
+
+  });
+
+  drawGuideLines(guide);
+
+}
+
+function drawCurveGraph(){
+  const guide=[];
+
+  rows.forEach(row=>{
+    const kind=row[0];
+    const line=row[7]||"실선";
+
+    ctx.save();
+    ctx.strokeStyle="#111";
+    ctx.lineWidth=n("graphWidth");
+    setDash(line);
+    ctx.beginPath();
+
+    if(kind==="수평"){
+      const x1=Number(row[1]), x2=Number(row[2]), y=Number(row[3]);
+      if([x1,x2,y].some(isNaN)) return;
+      guide.push([x1,y],[x2,y]);
+      ctx.moveTo(xMap(x1),yMap(y));
+      ctx.lineTo(xMap(x2),yMap(y));
+    }
+
+    else if([
+      "변화","A","감소곡선","증가곡선",
+      "이차함수 위로볼록","이차함수 아래로볼록",
+      "로그함수 위로볼록","로그함수 아래로볼록"
+    ].includes(kind)){
+      const x1=Number(row[1]), x2=Number(row[2]), y1=Number(row[3]), y2=Number(row[4]);
+      const shape=row[6]||"좁게";
+      if([x1,x2,y1,y2].some(isNaN)||x2<=x1) return;
+      guide.push([x1,y1],[x2,y2]);
+
+      for(let i=0;i<=360;i++){
+        const t=i/360;
+        const x=x1+(x2-x1)*t;
+        let s;
+
+        if(kind==="감소곡선"){
+          s=1-Math.exp(-4*t);
+          s=s/(1-Math.exp(-4));
+        }else if(kind==="증가곡선"){
+          s=Math.exp(4*(t-1));
+          s=(s-Math.exp(-4))/(1-Math.exp(-4));
+        }else if(kind==="변화" || kind==="A"){
+          s=easeInOut(t);
+        }else{
+          s=curveRatio(kind,t,shape);
+        }
+
+        const y=y1+(y2-y1)*s;
+        if(i===0) ctx.moveTo(xMap(x),yMap(y));
+        else ctx.lineTo(xMap(x),yMap(y));
+      }
+    }
+
+    else if(kind==="직선"){
+      const x1=Number(row[1]), y1=Number(row[2]), x2=Number(row[3]), y2=Number(row[4]);
+      if([x1,y1,x2,y2].some(isNaN)) return;
+      guide.push([x1,y1],[x2,y2]);
+      ctx.moveTo(xMap(x1),yMap(y1));
+      ctx.lineTo(xMap(x2),yMap(y2));
+    }
+
+    else if(kind==="꺾은선"){
+      const x1=Number(row[1]), y1=Number(row[2]), mx=Number(row[3]), my=Number(row[4]), x2=Number(row[5]), y2=Number(row[6]);
+      if([x1,y1,mx,my,x2,y2].some(isNaN)) return;
+      guide.push([x1,y1],[mx,my],[x2,y2]);
+      ctx.moveTo(xMap(x1),yMap(y1));
+      ctx.lineTo(xMap(mx),yMap(my));
+      ctx.lineTo(xMap(x2),yMap(y2));
+    }
+
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  drawGuideLines(guide);
+}
+
+function draw(){
+  updatePlotAndCanvas();
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="white";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  if(v("graphType")==="봉우리 곡선 그래프"){
+    drawPeakGraph();
+  }
+  else if(v("graphType")==="점 그래프"){
+    drawPointGraph();
+  }
+  else{
+    drawCurveGraph();
+  }
+
+  drawAxes();
+}
+
+function renderTable(){
+  const tbody=document.querySelector("#dataTable tbody");
+  tbody.innerHTML="";
+
+  rows.forEach((row,r)=>{
+    const tr=document.createElement("tr");
+    if(r===selectedRow) tr.classList.add("selected");
+
+    for(let c=0;c<9;c++){
+      const td=document.createElement("td");
+      td.contentEditable=true;
+      td.textContent=row[c] ?? "";
+      td.oninput=()=>{
+        rows[r][c]=td.textContent.trim();
+        draw();
+      };
+      tr.appendChild(td);
+    }
+
+    tr.onclick=()=>{
+      selectedRow=r;
+      renderTable();
+    };
+
+    tbody.appendChild(tr);
+  });
+}
+
+function addRow(row){
+  rows.push(row);
+  renderTable();
+  draw();
+}
+
+function addPoint(){
+
+  addRow([
+    "점",
+    v("pointName"),
+    Number(v("pointX")),
+    Number(v("pointY")),
+    v("pointColor"),
+    "",
+    "",
+    "",
+    ""
+  ]);
+
+}
+
+function addSegment(){
+  const mode=v("segmentType");
+  const x1=Number(v("segStart"));
+  const x2=Number(v("segEnd"));
+  const y1=Number(v("segY1"));
+  const y2=Number(v("segY2"));
+  const line=v("segmentLine");
+  const shape=v("segmentShape");
+
+  if([x1,x2,y1].some(isNaN)){
+    alert("숫자 입력칸을 확인하세요.");
+    return;
+  }
+
+  if(x2<=x1){
+    alert("구간 끝 x는 시작 x보다 커야 합니다.");
+    return;
+  }
+
+  if(mode==="수평"){
+    addRow(["수평",x1,x2,y1,"","","",line,""]);
+  }else if(mode==="완만 변화"){
+    addRow(["변화",x1,x2,y1,y2,"",shape,line,""]);
+  }else if(mode==="직선"){
+    addRow(["직선",x1,y1,x2,y2,"","",line,""]);
+  }else if(mode==="꺾은선"){
+    const mx=v("segMidX").trim()?Number(v("segMidX")):(x1+x2)/2;
+    const my=v("segMidY").trim()?Number(v("segMidY")):y2;
+    addRow(["꺾은선",x1,y1,mx,my,x2,y2,line,""]);
+  }else{
+    addRow([mode,x1,x2,y1,y2,"",shape,line,""]);
+  }
+}
+
+function deleteSelected(){
+  if(selectedRow===null) return;
+  rows.splice(selectedRow,1);
+  selectedRow=null;
+  renderTable();
+  draw();
+}
+
+function deleteLast(){
+  rows.pop();
+  selectedRow=null;
+  renderTable();
+  draw();
+}
+
+function clearRows(){
+  rows=[];
+  selectedRow=null;
+  renderTable();
+  draw();
+}
+
+function savePNG(){
+  draw();
+  const link=document.createElement("a");
+  link.download="physics_graph.png";
+  link.href=canvas.toDataURL("image/png");
+  link.click();
+}
+
+canvas.addEventListener("mousedown",e=>{
+  if(v("graphType")!=="봉우리 곡선 그래프") return;
+  const rect=canvas.getBoundingClientRect();
+  dragStart=invX((e.clientX-rect.left)*canvas.width/rect.width);
+});
+
+canvas.addEventListener("mouseup",e=>{
+  if(v("graphType")!=="봉우리 곡선 그래프") return;
+  if(dragStart===null) return;
+
+  const rect=canvas.getBoundingClientRect();
+  const endX=invX((e.clientX-rect.left)*canvas.width/rect.width);
+
+  const start=Math.min(dragStart,endX);
+  const end=Math.max(dragStart,endX);
+  dragStart=null;
+
+  if(end<=start) return;
+
+  let area=v("peakArea").trim();
+  let height;
+
+  if(area){
+    height=Number(area)*3/(2*(end-start));
+  }else{
+    height=Number(v("peakHeight"));
+  }
+
+  if(isNaN(height)){
+    alert("최댓값 또는 내부 면적을 숫자로 입력하세요.");
+    return;
+  }
+
+  addRow([
+    v("peakName")||"A",
+    start.toFixed(2),
+    end.toFixed(2),
+    height.toFixed(2),
+    area,
+    "",
+    v("peakShape"),
+    v("peakLine"),
+    ""
+  ]);
+});
+
+function changeGraphType(){
+  rows=[];
+  selectedRow=null;
+  renderTable();
+
+  const type=v("graphType");
+  const isPeak = type==="봉우리 곡선 그래프";
+  const isPoint = type==="점 그래프";
+  const isSegment = type==="구간 그래프";
+
+  document.getElementById("peakBox")
+    .classList.toggle("hidden", !isPeak);
+
+  document.getElementById("pointBox")
+    .classList.toggle("hidden", !isPoint);
+
+  document.getElementById("segmentBox")
+    .classList.toggle("hidden", !isSegment);
+
+  if(isPeak){
+    document.getElementById("xLabel").value="시간";
+    document.getElementById("yLabel").value="힘\n의\n\n크\n기";
+    document.getElementById("xMin").value="0";
+    document.getElementById("xMax").value="5";
+    document.getElementById("yMin").value="0";
+    document.getElementById("yMax").value="3";
+    document.getElementById("xTicks").value="0";
+    document.getElementById("yTicks").value="0";
+    document.getElementById("xUnitPx").value="110";
+    document.getElementById("yUnitPx").value="110";
+    document.getElementById("sameXYScale").checked=false;
+  }
+  else if(isPoint){
+    document.getElementById("xLabel").value="전자 껍질 수";
+    document.getElementById("yLabel").value="원\n자\n가\n전\n자\n수";
+    document.getElementById("xMin").value="0";
+    document.getElementById("xMax").value="5";
+    document.getElementById("yMin").value="0";
+    document.getElementById("yMax").value="8";
+    document.getElementById("xTicks").value="1,2,3,4";
+    document.getElementById("yTicks").value="1,2,7";
+    document.getElementById("xUnitPx").value="70";
+    document.getElementById("yUnitPx").value="70";
+    document.getElementById("sameXYScale").checked=true;
+  }
+  else{
+    document.getElementById("xLabel").value="시간(s)";
+    document.getElementById("yLabel").value="B\n의\n\n운\n동\n량\n\n(kg·m/s)";
+    document.getElementById("xMin").value="0";
+    document.getElementById("xMax").value="5";
+    document.getElementById("yMin").value="0";
+    document.getElementById("yMax").value="25";
+    document.getElementById("xTicks").value="0";
+    document.getElementById("yTicks").value="0";
+    document.getElementById("xUnitPx").value="110";
+    document.getElementById("yUnitPx").value="18";
+    document.getElementById("sameXYScale").checked=false;
+  }
+
+  if(isSegment) changeSegmentType();
+  draw();
+}
+function changeSegmentType(){
+  const mode=v("segmentType");
+
+  document.getElementById("segY2Wrap").classList.toggle("hidden",mode==="수평");
+  document.getElementById("segMidXWrap").classList.toggle("hidden",mode!=="꺾은선");
+  document.getElementById("segMidYWrap").classList.toggle("hidden",mode!=="꺾은선");
+
+  const showShape=[
+    "완만 변화","감소곡선","증가곡선",
+    "이차함수 위로볼록","이차함수 아래로볼록",
+    "로그함수 위로볼록","로그함수 아래로볼록"
+  ].includes(mode);
+  document.getElementById("segShapeWrap").classList.toggle("hidden",!showShape);
+}
+
+document.getElementById("graphType").addEventListener("change",changeGraphType);
+document.getElementById("segmentType").addEventListener("change",changeSegmentType);
+
+document.querySelectorAll("input,textarea,select").forEach(el=>{
+  el.addEventListener("input",draw);
+});
+
+window.onload=changeGraphType;
+</script>
+
+</body>
+</html>

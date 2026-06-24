@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>평가원 문제 검색</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<header>
+
+  <a href="../../index.html" class="home-btn">
+    ← J&B 홈
+  </a>
+
+  <div class="logo">J&B</div>
+
+  <div class="title">
+    평가원 문제 검색
+  </div>
+
+</header>
+
+<main>
+
+  <section class="search-card">
+
+    <h1>기출 문제 검색</h1>
+
+    <p class="guide">
+      예시 :
+      25 03 고2 지구과학Ⅰ 12번<br>
+      25 10 고3 물리학Ⅰ 7번<br>
+      26 수능 화학Ⅰ 15번
+    </p>
+
+    <div class="search-row">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="검색어 입력"
+        autocomplete="off"
+      >
+
+      <button id="searchBtn">
+        검색
+      </button>
+    </div>
+
+    <div id="searchInfo"></div>
+
+  </section>
+
+
+  <section id="resultArea" class="hidden">
+
+    <div class="result-card">
+
+      <h2 id="resultTitle">
+        검색 결과
+      </h2>
+
+      <div class="image-wrap">
+
+        <img
+          id="questionImage"
+          src=""
+          alt=""
+        >
+
+      </div>
+
+      <div class="button-wrap">
+
+        <a
+          id="problemPdfBtn"
+          target="_blank"
+          class="pdf-btn"
+        >
+          문제 PDF
+        </a>
+
+        <a
+          id="solutionPdfBtn"
+          target="_blank"
+          class="pdf-btn"
+        >
+          해설 PDF
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+<script src="app.js?v=2"></script>
+
+</body>
+</html>
