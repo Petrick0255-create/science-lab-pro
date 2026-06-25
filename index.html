@@ -10,12 +10,95 @@
 <link rel="icon" href="logo.png">
 </head>
 
+<script type="module">
+
+import {
+login,
+logout,
+observeLogin
+} from "./js/auth.js";
+
+window.login = login;
+window.logout = logout;
+
+observeLogin((user)=>{
+
+const loginBtn=document.getElementById("loginBtn");
+
+if(!loginBtn) return;
+
+if(user){
+
+loginBtn.innerText=user.displayName;
+
+}else{
+
+loginBtn.innerText="Google 로그인";
+
+}
+
+});
+
+</script>
+
 <body>
 
 <header>
-  <img src="logo.png" class="logo" alt="J&B LAB">
-  <div class="brand">J&B</div>
-  <div class="badge">LAB</div>
+
+<div class="header-left">
+
+    <img src="logo.png" class="logo">
+
+    <div class="brand">J&B</div>
+
+    <div class="badge">LAB</div>
+
+</div>
+
+<div class="user-area">
+
+    <button id="loginBtn">
+        👤 로그인
+    </button>
+
+    <div id="userMenu" class="user-menu">
+
+        <div class="user-name" id="userName"></div>
+
+        <div class="user-email" id="userEmail"></div>
+
+        <div class="member-type" id="memberType">
+            FREE 회원
+        </div>
+
+        <hr>
+
+        <div id="usageBox">
+
+            그래프 : <span id="graphRemain">20</span>회<br>
+
+            화학 : <span id="chemRemain">20</span>회<br>
+
+            생명 : <span id="bioRemain">20</span>회<br>
+
+            지구 : <span id="earthRemain">10</span>회
+
+        </div>
+
+        <hr>
+
+        <button class="pro-btn">
+            ⭐ PRO 업그레이드
+        </button>
+
+        <button id="logoutBtn">
+            로그아웃
+        </button>
+
+    </div>
+
+</div>
+
 </header>
 
 <main class="container">
@@ -149,6 +232,107 @@
 <footer>
   © 2026 J&B LAB
 </footer>
+
+<script type="module">
+import {
+  login,
+  logout,
+  observeLogin
+} from "./js/auth.js";
+
+import {
+  db,
+  doc,
+  getDoc
+} from "./js/firebase.js";
+
+window.login = login;
+window.logout = logout;
+
+const loginBtn = document.getElementById("loginBtn");
+const userMenu = document.getElementById("userMenu");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const userName = document.getElementById("userName");
+const userEmail = document.getElementById("userEmail");
+const memberType = document.getElementById("memberType");
+
+const graphRemain = document.getElementById("graphRemain");
+const chemRemain = document.getElementById("chemRemain");
+const bioRemain = document.getElementById("bioRemain");
+const earthRemain = document.getElementById("earthRemain");
+
+loginBtn.onclick = () => {
+  if (loginBtn.dataset.login === "true") {
+    userMenu.classList.toggle("show");
+  } else {
+    login();
+  }
+};
+
+logoutBtn.onclick = async () => {
+  await logout();
+  userMenu.classList.remove("show");
+};
+
+observeLogin(async (user) => {
+  if (!user) {
+    loginBtn.dataset.login = "false";
+    loginBtn.innerHTML = "👤 로그인";
+
+    userMenu.classList.remove("show");
+
+    userName.innerText = "";
+    userEmail.innerText = "";
+    memberType.innerText = "FREE 회원";
+
+    graphRemain.innerText = "20";
+    chemRemain.innerText = "20";
+    bioRemain.innerText = "20";
+    earthRemain.innerText = "10";
+
+    return;
+  }
+
+  loginBtn.dataset.login = "true";
+  loginBtn.innerHTML = "👤 " + (user.displayName || "사용자") + " ▼";
+
+  userName.innerText = user.displayName || "사용자";
+  userEmail.innerText = user.email || "";
+
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) {
+    memberType.innerText = "FREE 회원";
+    return;
+  }
+
+  const data = snap.data();
+
+  if (data.premium === true) {
+    memberType.innerText = "🟢 PRO 회원";
+
+    graphRemain.innerText = "무제한";
+    chemRemain.innerText = "무제한";
+    bioRemain.innerText = "무제한";
+    earthRemain.innerText = "무제한";
+  } else {
+    memberType.innerText = "🟡 FREE 회원";
+
+    graphRemain.innerText = Math.max(0, 20 - (data.graphCount || 0));
+    chemRemain.innerText = Math.max(0, 20 - (data.chemistryCount || 0));
+    bioRemain.innerText = Math.max(0, 20 - (data.biologyCount || 0));
+    earthRemain.innerText = Math.max(0, 10 - (data.earthCount || 0));
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (!document.querySelector(".user-area").contains(e.target)) {
+    userMenu.classList.remove("show");
+  }
+});
+</script>
 
 </body>
 </html>

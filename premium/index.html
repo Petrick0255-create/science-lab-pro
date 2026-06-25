@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>J&B LAB PRO</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background: #f4f7fb;
+  color: #1f2937;
+}
+
+header {
+  height: 64px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  font-weight: 900;
+  font-size: 22px;
+  margin-right: 8px;
+}
+
+.badge {
+  background: #2563eb;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+nav {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #374151;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.hero {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 90px 24px 70px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 52px;
+  line-height: 1.15;
+  margin: 0 0 20px;
+  letter-spacing: -1.5px;
+}
+
+.hero p {
+  font-size: 20px;
+  line-height: 1.7;
+  color: #4b5563;
+  margin: 0 0 34px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-block;
+  padding: 15px 24px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.btn.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn.secondary {
+  background: white;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 50px 24px;
+}
+
+.section-title {
+  font-size: 32px;
+  margin: 0 0 12px;
+  letter-spacing: -0.8px;
+}
+
+.section-desc {
+  color: #6b7280;
+  font-size: 17px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.icon {
+  font-size: 32px;
+  margin-bottom: 14px;
+}
+
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.card p {
+  color: #6b7280;
+  line-height: 1.55;
+  margin: 0;
+  font-size: 15px;
+}
+
+.compare {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.compare-row:last-child {
+  border-bottom: 0;
+}
+
+.compare-row div {
+  padding: 18px;
+  font-weight: 700;
+}
+
+.compare-head {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.price-box {
+  background: #111827;
+  color: white;
+  border-radius: 28px;
+  padding: 38px;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 30px;
+  align-items: center;
+}
+
+.price-box h2 {
+  font-size: 34px;
+  margin: 0 0 12px;
+}
+
+.price-box p {
+  color: #d1d5db;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.price {
+  text-align: center;
+  background: white;
+  color: #111827;
+  border-radius: 22px;
+  padding: 28px;
+}
+
+.price strong {
+  display: block;
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+.notice {
+  margin-top: 18px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  color: #6b7280;
+  padding: 50px 20px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .price-box {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 560px) {
+  header {
+    padding: 0 18px;
+  }
+
+  nav {
+    display: none;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-row {
+    grid-template-columns: 1fr;
+  }
+
+  .compare-row div {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .hero {
+    padding-top: 60px;
+  }
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .hero p {
+    font-size: 17px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">J&B LAB</div>
+  <div class="badge">PRO</div>
+
+  <nav>
+    <a href="../index.html">홈</a>
+    <a href="#features">기능</a>
+    <a href="#price">가격</a>
+    <a href="#contact">구매문의</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>
+    과학 문제 제작,<br>
+    이제 10배 빠르게.
+  </h1>
+
+  <p>
+    평가원 스타일 그래프, 중화반응 계산, 판 경계 시뮬레이터까지.<br>
+    과학 교재 제작자와 강사를 위한 문제 제작 도구 모음입니다.
+  </p>
+
+  <div class="buttons">
+    <a class="btn primary" href="#price">PRO 구매하기</a>
+    <a class="btn secondary" href="../index.html">무료 체험하기</a>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <h2 class="section-title">문제 제작에 바로 쓰는 도구</h2>
+  <p class="section-desc">
+    단순한 계산기가 아니라, 실제 수업 자료와 교재 그림을 빠르게 만들기 위한 도구입니다.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="icon">📈</div>
+      <h3>그래프 제작기</h3>
+      <p>계단 그래프, 곡선 그래프, 봉우리 그래프를 평가원 스타일로 빠르게 제작합니다.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">🧪</div>
+      <h3>중화반응 디자이너</h3>
+      <p>산과 염기의 부피, 농도, 이온 수 변화를 자동 계산해 문항 제작 시간을 줄입니다.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">🌋</div>
+      <h3>판 경계 시뮬레이터</h3>
+      <p>발산형, 수렴형, 보존형 경계를 시각적으로 구성하고 문제 그림으로 활용합니다.</p>
+    </div>
+
+    <div class="card">
+      <div class="icon">🧬</div>
+      <h3>생명과학 도구</h3>
+      <p>DNA 전사, 번역, 세포 구조 등 생명과학 그림 제작에 필요한 기능을 제공합니다.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <h2 class="section-title">무료 버전과 PRO 차이</h2>
+  <p class="section-desc">
+    무료 버전은 체험용, PRO는 실제 교재 제작용입니다.
+  </p>
+
+  <div class="compare">
+    <div class="compare-row compare-head">
+      <div>기능</div>
+      <div>무료</div>
+      <div>PRO</div>
+    </div>
+
+    <div class="compare-row">
+      <div>기본 시뮬레이터 체험</div>
+      <div>가능</div>
+      <div>가능</div>
+    </div>
+
+    <div class="compare-row">
+      <div>평가원 스타일 그래프 제작</div>
+      <div>일부 가능</div>
+      <div>전체 가능</div>
+    </div>
+
+    <div class="compare-row">
+      <div>문항 제작용 세부 옵션</div>
+      <div>제한</div>
+      <div>전체 제공</div>
+    </div>
+
+    <div class="compare-row">
+      <div>업데이트 기능</div>
+      <div>일부</div>
+      <div>우선 제공</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="price">
+  <div class="price-box">
+    <div>
+      <h2>J&B LAB PRO 평생 이용권</h2>
+      <p>
+        과학 문제 제작에 필요한 도구를 한 번에 사용할 수 있습니다.<br>
+        초기 판매가는 낮게 시작하고, 기능이 추가되면 가격이 올라갈 수 있습니다.
+      </p>
+    </div>
+
+    <div class="price">
+      <strong>29,000원</strong>
+      <span>초기 런칭가</span>
+      <br><br>
+      <a class="btn primary" href="#contact">구매 문의하기</a>
+    </div>
+  </div>
+
+  <div class="notice">
+    ※ 현재는 계좌이체 후 이용 권한을 제공하는 방식입니다.<br>
+    ※ 정식 결제 시스템은 추후 적용 예정입니다.
+  </div>
+</section>
+
+<section class="section" id="contact">
+  <h2 class="section-title">구매 문의</h2>
+  <p class="section-desc">
+    구매를 원하시면 아래 연락처로 문의해 주세요.
+  </p>
+
+  <div class="card">
+    <h3>입금 후 연락</h3>
+    <p>
+      오픈채팅 또는 이메일로 입금자명과 연락처를 보내주세요.<br><br>
+      <b>오픈채팅:</b> 여기에 링크 입력<br>
+      <b>이메일:</b> 여기에 이메일 입력<br>
+      <b>계좌:</b> 은행명 000000-00-000000 박준범
+    </p>
+  </div>
+</section>
+
+<footer>
+  © 2026 J&B LAB. Science tools for teachers and creators.
+</footer>
+
+</body>
+</html>
