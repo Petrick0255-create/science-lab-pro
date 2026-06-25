@@ -1,3 +1,5 @@
-import { checkFolderLicense } from "../js/license-core.js";
+import { checkLicense } from "../js/license-core.js";
 
-checkFolderLicense("chemistry");
+window.useChemistry = async function () {
+  return await checkLicense("chemistry");
+};

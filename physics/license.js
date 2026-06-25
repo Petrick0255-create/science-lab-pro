@@ -1,3 +1,5 @@
-import { checkFolderLicense } from "../js/license-core.js";
+import { checkLicense } from "../js/license-core.js";
 
-checkFolderLicense("physics");
+window.usePhysics = async function () {
+  return await checkLicense("physics");
+};
