@@ -32,6 +32,7 @@ export async function login() {
         name: user.displayName,
         email: user.email,
         premium: false,
+        admin:false,
 
         graphCount: 0,
         chemistryCount: 0,
