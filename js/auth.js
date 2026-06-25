@@ -18,21 +18,19 @@ export let currentUser = null;
 export async function login() {
   try {
     const result = await signInWithPopup(auth, provider);
-
     const user = result.user;
 
     const userRef = doc(db, "users", user.uid);
-
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
-
       await setDoc(userRef, {
         uid: user.uid,
-        name: user.displayName,
-        email: user.email,
+        name: user.displayName || "",
+        email: user.email || "",
+
         premium: false,
-        admin:false,
+        admin: false,
 
         graphCount: 0,
         chemistryCount: 0,
@@ -41,15 +39,11 @@ export async function login() {
 
         createdAt: Date.now()
       });
-
     }
 
   } catch (e) {
-
     console.error(e);
-
-    alert("로그인 실패");
-
+    alert("로그인 처리 실패: " + e.code + "\n" + e.message);
   }
 }
 

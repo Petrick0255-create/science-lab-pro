@@ -10,36 +10,6 @@
 <link rel="icon" href="logo.png">
 </head>
 
-<script type="module">
-
-import {
-login,
-logout,
-observeLogin
-} from "./js/auth.js";
-
-window.login = login;
-window.logout = logout;
-
-observeLogin((user)=>{
-
-const loginBtn=document.getElementById("loginBtn");
-
-if(!loginBtn) return;
-
-if(user){
-
-loginBtn.innerText=user.displayName;
-
-}else{
-
-loginBtn.innerText="Google 로그인";
-
-}
-
-});
-
-</script>
 
 <body>
 
@@ -210,7 +180,7 @@ loginBtn.innerText="Google 로그인";
     한국 교과서 협회 쇼핑몰
   </a>
 
-  <a href="https://www.suneung.re.kr/boardCnts/list.do?boardID=1500230&m=0302&s=suneung&searchStr="_blank" class="quick-btn">
+  <a href="https://www.suneung.re.kr/boardCnts/list.do?boardID=1500230&m=0302&s=suneung&searchStr=" target="_blank" class="quick-btn">
     평가원 보도자료
   </a>
 
@@ -284,7 +254,7 @@ observeLogin(async (user) => {
 
     userName.innerText = "";
     userEmail.innerText = "";
-    memberType.innerText = "FREE 회원";
+    memberType.innerText = "로그인 필요";
 
     graphRemain.innerText = "20";
     chemRemain.innerText = "20";
@@ -304,19 +274,28 @@ observeLogin(async (user) => {
   const snap = await getDoc(userRef);
 
   if (!snap.exists()) {
-    memberType.innerText = "FREE 회원";
+    memberType.innerText = "회원 정보 없음";
     return;
   }
 
   const data = snap.data();
 
-  if (data.premium === true) {
+  if (data.admin === true) {
+    memberType.innerText = "🔵 관리자";
+
+    graphRemain.innerText = "무제한";
+    chemRemain.innerText = "무제한";
+    bioRemain.innerText = "무제한";
+    earthRemain.innerText = "무제한";
+
+  } else if (data.premium === true) {
     memberType.innerText = "🟢 PRO 회원";
 
     graphRemain.innerText = "무제한";
     chemRemain.innerText = "무제한";
     bioRemain.innerText = "무제한";
     earthRemain.innerText = "무제한";
+
   } else {
     memberType.innerText = "🟡 FREE 회원";
 
@@ -328,10 +307,15 @@ observeLogin(async (user) => {
 });
 
 document.addEventListener("click", (e) => {
-  if (!document.querySelector(".user-area").contains(e.target)) {
+  const userArea = document.querySelector(".user-area");
+
+  if (!userArea) return;
+
+  if (!userArea.contains(e.target)) {
     userMenu.classList.remove("show");
   }
 });
+
 </script>
 
 </body>
